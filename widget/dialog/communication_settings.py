@@ -18,6 +18,7 @@ class CommunicationSettingDialog(BaseDialog):
     serial_port_state_changed = Signal(tuple)
     tcp_server_state_changed = Signal(tuple)
     udp_server_state_changed = Signal(tuple)
+    websocket_client_state_changed = Signal(tuple)
     send_status = Signal(str)
 
     def __init__(self, configuration, communication_thread):
@@ -52,53 +53,71 @@ class CommunicationSettingDialog(BaseDialog):
         self.udp_server_state_display = RoundIndicator()
         communication_setting_layout.addWidget(self.udp_server_state_display, 2, 1)
 
+        # WebSocket客户端状态（通信设置页）
+        websocket_client_state = create_label("WebSocket状态:")
+        communication_setting_layout.addWidget(websocket_client_state, 3, 0)
+        self.websocket_client_state_display = RoundIndicator()
+        communication_setting_layout.addWidget(self.websocket_client_state_display, 3, 1)
+
         # 选择端口（通信设置页）
         port = create_label("串口:")
-        communication_setting_layout.addWidget(port, 3, 0)
+        communication_setting_layout.addWidget(port, 4, 0)
         self.select_port = create_combo_box()
-        communication_setting_layout.addWidget(self.select_port, 3, 1)
+        communication_setting_layout.addWidget(self.select_port, 4, 1)
 
         # 波特率（通信设置页）
         baud_rate = create_label("波特率:")
-        communication_setting_layout.addWidget(baud_rate, 4, 0)
+        communication_setting_layout.addWidget(baud_rate, 5, 0)
         self.set_baud_rate = create_combo_box(
             ["9600", "14400", "19200", "38400", "57600", "115200", "128000", "256000"], "115200"
         )
-        communication_setting_layout.addWidget(self.set_baud_rate, 4, 1)
+        communication_setting_layout.addWidget(self.set_baud_rate, 5, 1)
 
         # 串口连接按钮（通信设置页）
         self.serial_port_connect_button = create_button(style="")
         self.serial_port_connect_button.clicked.connect(self.toggle_serial_port_state)
-        communication_setting_layout.addWidget(self.serial_port_connect_button, 5, 0, 1, 2)
+        communication_setting_layout.addWidget(self.serial_port_connect_button, 6, 0, 1, 2)
 
         # 监听IP（通信设置页）
         listening_ip = create_label("监听IP:")
-        communication_setting_layout.addWidget(listening_ip, 6, 0)
+        communication_setting_layout.addWidget(listening_ip, 7, 0)
         self.set_listening_ip = create_line_edit("0.0.0.0")
-        communication_setting_layout.addWidget(self.set_listening_ip, 6, 1)
+        communication_setting_layout.addWidget(self.set_listening_ip, 7, 1)
 
         # 监听端口（通信设置页）
         listening_port = create_label("监听端口:")
-        communication_setting_layout.addWidget(listening_port, 7, 0)
+        communication_setting_layout.addWidget(listening_port, 8, 0)
         self.set_listening_port = create_line_edit("32767")
-        communication_setting_layout.addWidget(self.set_listening_port, 7, 1)
+        communication_setting_layout.addWidget(self.set_listening_port, 8, 1)
 
         # 客户端数量（通信设置页）
         client_count = create_label("客户端数量:")
-        communication_setting_layout.addWidget(client_count, 8, 0)
+        communication_setting_layout.addWidget(client_count, 9, 0)
         self.client_count_display = create_line_edit("0")
         self.client_count_display.setReadOnly(True)
-        communication_setting_layout.addWidget(self.client_count_display, 8, 1)
+        communication_setting_layout.addWidget(self.client_count_display, 9, 1)
 
         # TCP服务器启动按钮（通信设置页）
         self.tcp_server_button = create_button("打开TCP服务器", style="")
         self.tcp_server_button.clicked.connect(self.toggle_tcp_server_state)
-        communication_setting_layout.addWidget(self.tcp_server_button, 9, 0, 1, 2)
+        communication_setting_layout.addWidget(self.tcp_server_button, 10, 0, 1, 2)
 
         # UDP服务器启动按钮（通信设置页）
         self.udp_server_button = create_button("打开UDP服务器", style="")
         self.udp_server_button.clicked.connect(self.toggle_udp_server_state)
-        communication_setting_layout.addWidget(self.udp_server_button, 10, 0, 1, 2)
+        communication_setting_layout.addWidget(self.udp_server_button, 11, 0, 1, 2)
+
+        # WebSocket URI（通信设置页）
+        ws_uri_label = create_label("WS地址:")
+        communication_setting_layout.addWidget(ws_uri_label, 12, 0)
+        self.set_ws_uri = create_line_edit(self.configuration.get("WebSocketURI", "ws://117.72.54.78:4001"))
+        self.set_ws_uri.editingFinished.connect(lambda: self.configuration.set("WebSocketURI", self.set_ws_uri.text()))
+        communication_setting_layout.addWidget(self.set_ws_uri, 12, 1)
+
+        # WebSocket启动按钮（通信设置页）
+        self.websocket_client_button = create_button("连接WebSocket", style="")
+        self.websocket_client_button.clicked.connect(self.toggle_websocket_client_state)
+        communication_setting_layout.addWidget(self.websocket_client_button, 13, 0, 1, 2)
 
         communication_setting_layout.setColumnStretch(0, 1)
         communication_setting_layout.setColumnStretch(1, 1)
@@ -267,6 +286,20 @@ class CommunicationSettingDialog(BaseDialog):
                 f"UDP服务器已启动（正在监听{self.set_listening_ip.text()}:{self.set_listening_port.text()}）！"
             )
 
+    def toggle_websocket_client_state(self):
+        if self.communication_thread.get("WS"):
+            self.communication_thread["WS"].stop()
+            self.communication_thread["WS"] = None
+            self.websocket_client_state_display.setColor("Red")
+            self.websocket_client_button.setText("连接WebSocket")
+            self.send_status.emit("WebSocket连接已关闭！")
+        else:
+            uri = self.set_ws_uri.text()
+            self.websocket_client_state_changed.emit((uri,))
+            self.websocket_client_state_display.setColor("Green")
+            self.websocket_client_button.setText("断开WebSocket")
+            self.send_status.emit(f"正在连接WebSocket服务器({uri})...")
+
     def send_command(self):
         if not self.communication_thread["串口"] or not self.communication_thread["串口"].serial_connection.is_open:
             QMessageBox.warning(self, "警告", "串口异常，请检查串口连接状态！")
@@ -351,8 +384,23 @@ class CommunicationSettingDialog(BaseDialog):
         else:
             self.udp_server_button.setText("启动UDP服务器")
 
+    def update_websocket_client_state(self):
+        # 指示灯
+        if self.communication_thread.get("WS") and self.communication_thread["WS"].running:
+            self.websocket_client_state_display.setColor("Green")
+        else:
+            self.websocket_client_state_display.setColor("Red")
+            self.communication_thread["WS"] = None
+
+        # 按钮
+        if self.communication_thread.get("WS"):
+            self.websocket_client_button.setText("断开WebSocket")
+        else:
+            self.websocket_client_button.setText("连接WebSocket")
+
     def update_ui(self):
         self.update_serial_connect_state()
         self.update_tcp_server_state()
         self.update_udp_server_state()
+        self.update_websocket_client_state()
         self.refresh_serial_ports()

@@ -107,8 +107,8 @@ class Console(QMainWindow):
         self._init_ui()
 
         # Initialize Remote WS Client
-        self.communication_thread["WS"] = WebSocketClientThread()
-        self.communication_thread["WS"].start()
+        if self.config_manager.get("WebSocketEnabled", False):
+            self.open_websocket_client((self.config_manager.get("WebSocketURI", "ws://117.72.54.78:4001"),))
 
         # Timer for countdown
         self.timer = QTimer()
@@ -728,6 +728,7 @@ class Console(QMainWindow):
             dialog.serial_port_state_changed.connect(self.open_serial_port)
             dialog.tcp_server_state_changed.connect(self.open_tcp_server)
             dialog.udp_server_state_changed.connect(self.open_udp_server)
+            dialog.websocket_client_state_changed.connect(self.open_websocket_client)
             dialog.send_status.connect(self.update_status)
         elif dialog_type == "比赛设置":
             dialog = CompetitionSettingDialog(config)
@@ -765,6 +766,15 @@ class Console(QMainWindow):
         self.communication_thread["UDP"] = UdpServerThread(config[0], config[1])
         self._connect_communication_signals(self.communication_thread["UDP"])
         self.communication_thread["UDP"].start()
+
+    def open_websocket_client(self, config):
+        self.communication_thread["WS"] = WebSocketClientThread(config[0])
+        self._connect_communication_signals(self.communication_thread["WS"])
+        self.communication_thread["WS"].start()
+        self.update_status(f"WebSocket客户端已启动，正在连接 {config[0]}...")
+        # Update config
+        self.config_manager.set("WebSocketEnabled", True)
+        self.config_manager.set("WebSocketURI", config[0])
 
     def _connect_communication_signals(self, thread):
         thread.real_received.connect(self.update_real_time_display)

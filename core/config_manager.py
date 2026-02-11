@@ -23,6 +23,8 @@ class ConfigManager:
         "SSID": "LAPTOP-XXY",
         "Password": "12345000",
         "Key": "",
+        "WebSocketEnabled": False,
+        "WebSocketURI": "ws://117.72.54.78:4001",
     }
 
     def __init__(self, config_path="config.json"):
