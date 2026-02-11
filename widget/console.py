@@ -49,12 +49,6 @@ from widget.screen import FullScreenWindow
 
 
 class Console(QMainWindow):
-    # 组别到Key的映射关系（统一管理，避免重复定义）
-    GROUP_KEY_MAPPING = {
-        "摄像头组": "220dfce992d21aea4507065760ddfce7",
-        "电磁组": "46840a1abb9fa373fe8daa1991bd53cd",
-        "缩微光电组": "141d48c6c30c722025d1e75e1fafcb87",
-    }
 
     def __init__(self):
         super().__init__()
@@ -540,10 +534,6 @@ class Console(QMainWindow):
         about_action = menu_bar.addAction("关于")
         about_action.triggered.connect(self.show_about)
 
-    def _create_display_layout(self):
-        # This method is no longer needed as UI is initialized in _init_ui
-        return None
-
     def broadcast_current_state(self):
         current_team = self.data_manager.get_current_team()
 
@@ -769,7 +759,6 @@ class Console(QMainWindow):
         self.communication_thread["WS"].start()
         self.update_status(f"WebSocket客户端已启动，正在连接 {config[0]}...")
         # Update config
-        # self.config_manager.set("WebSocketEnabled", True)
         self.config_manager.set("WebSocketURI", config[0])
 
     def _connect_communication_signals(self, thread):

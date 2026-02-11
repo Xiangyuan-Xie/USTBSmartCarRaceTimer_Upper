@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import os
 from threading import Thread
 
@@ -10,10 +9,11 @@ from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from loguru import logger
 
 # Suppress uvicorn logs
-logging.getLogger("uvicorn.error").setLevel(logging.ERROR)
-logging.getLogger("uvicorn.access").setLevel(logging.ERROR)
+# logging.getLogger("uvicorn.error").setLevel(logging.ERROR)
+# logging.getLogger("uvicorn.access").setLevel(logging.ERROR)
 
 
 class WebServer:
@@ -89,7 +89,7 @@ class WebServer:
             server = uvicorn.Server(config)
             self.loop.run_until_complete(server.serve())
         except Exception as e:
-            print(f"Web server failed to start: {e}")
+            logger.error(f"Web server failed to start: {e}")
 
     def broadcast(self, data):
         """Broadcast data to all connected clients"""

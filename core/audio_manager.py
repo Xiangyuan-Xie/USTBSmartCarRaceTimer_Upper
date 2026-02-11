@@ -1,7 +1,7 @@
-import logging
 import os
 
 import pygame
+from loguru import logger
 
 
 class AudioManager:
@@ -22,13 +22,13 @@ class AudioManager:
         try:
             pygame.mixer.init()
             self.sounds = {}
-            logging.info("Audio mixer initialized successfully.")
+            logger.info("Audio mixer initialized successfully.")
         except Exception as e:
-            logging.error(f"Audio mixer initialization failed: {e}")
+            logger.error(f"Audio mixer initialization failed: {e}")
 
     def play(self, file_path):
         if not os.path.exists(file_path):
-            logging.warning(f"Audio file not found: {file_path}")
+            logger.warning(f"Audio file not found: {file_path}")
             return
 
         try:
@@ -37,4 +37,4 @@ class AudioManager:
 
             self.sounds[file_path].play()
         except Exception as e:
-            logging.error(f"Failed to play audio {file_path}: {e}")
+            logger.error(f"Failed to play audio {file_path}: {e}")

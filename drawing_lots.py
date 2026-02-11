@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 import random
-import pandas as pd
+import sys
 from pathlib import Path
+
+import pandas as pd
+from loguru import logger
+
+# Configure loguru for standalone script
+logger.remove()
+logger.add(
+    sys.stdout,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> - <level>{message}</level>",
+)
 
 
 def generate_order(group, seed):
     """根据组别和随机种子生成抽签顺序标签"""
-    group_dict = {
-        "镜头组": 18,
-        "电磁组": 20,
-        "缩微光电组": 9
-    }
+    group_dict = {"镜头组": 18, "电磁组": 20, "缩微光电组": 9}
 
     if group not in group_dict:
         raise ValueError(f"未知的组别: {group}")
 
-    prefix = 'A' if group == '镜头组' else 'B' if group == '电磁组' else 'D'
+    prefix = "A" if group == "镜头组" else "B" if group == "电磁组" else "D"
     order = [f"{prefix}{i}" for i in range(1, group_dict[group] + 1)]
 
     # 防止 seed 超范围
@@ -25,20 +31,22 @@ def generate_order(group, seed):
 
 
 def process_table(group, seed):
-    file_prefix = 'A' if group == '镜头组' else 'B' if group == '电磁组' else 'D'
-    desktop_path = Path.home() / 'Desktop'
+    file_prefix = "A" if group == "镜头组" else "B" if group == "电磁组" else "D"
+    desktop_path = Path.home() / "Desktop"
 
     file_path = None
-    for ext in ['.xlsx', '.xls', '.csv']:
+    for ext in [".xlsx", ".xls", ".csv"]:
         potential_file = desktop_path / f"{file_prefix}{ext}"
         if potential_file.exists():
             file_path = potential_file
             break
 
     if file_path is None:
-        raise FileNotFoundError(f"未找到 {file_prefix} 表格文件，请放在桌面并命名为 {file_prefix}.xlsx 或 {file_prefix}.csv")
+        raise FileNotFoundError(
+            f"未找到 {file_prefix} 表格文件，请放在桌面并命名为 {file_prefix}.xlsx 或 {file_prefix}.csv"
+        )
 
-    if file_path.suffix == '.csv':
+    if file_path.suffix == ".csv":
         df = pd.read_csv(file_path, header=None)
     else:
         df = pd.read_excel(file_path, header=None)
@@ -58,7 +66,6 @@ def process_table(group, seed):
     return df, output_file
 
 
-
 # 示例运行
 if __name__ == "__main__":
     seed = 202511301213
@@ -66,6 +73,6 @@ if __name__ == "__main__":
 
     try:
         result_df, output_path = process_table(group, seed)
-        print(f"抽签结果已生成: {output_path}")
+        logger.info(f"抽签结果已生成: {output_path}")
     except Exception as e:
-        print(f"错误: {e}")
+        logger.error(f"错误: {e}")

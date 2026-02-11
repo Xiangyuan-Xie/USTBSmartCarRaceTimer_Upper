@@ -4,6 +4,7 @@ import socket
 
 import serial
 import websockets
+from loguru import logger
 from PySide6.QtCore import QThread, Signal
 
 
@@ -40,7 +41,7 @@ class WebSocketClientThread(QThread):
         try:
             self.loop.run_until_complete(self.websocket_loop())
         except Exception as e:
-            print(f"WebSocket循环结束: {e}")
+            logger.error(f"WebSocket循环结束: {e}")
         finally:
             self.loop.close()
 
@@ -48,13 +49,13 @@ class WebSocketClientThread(QThread):
         try:
             self.websocket = await websockets.connect(self.uri)
             async with self.websocket:
-                print(f"已连接到 {self.uri}")
+                logger.info(f"已连接到 {self.uri}")
                 while self.running:
                     try:
                         data = await asyncio.wait_for(self.websocket.recv(), timeout=1.0)
                         data = data.strip()
                         self.message_received.emit(data)
-                        print(f"[WS] {data}")
+                        # logger.debug(f"[WS] {data}")
 
                         if "Reset" in data:
                             self.timer_reset.emit()
@@ -67,15 +68,15 @@ class WebSocketClientThread(QThread):
                     except asyncio.TimeoutError:
                         continue
                     except websockets.ConnectionClosed:
-                        print("服务器连接关闭")
+                        logger.warning("服务器连接关闭")
                         break
                     except Exception as e:
-                        print(f"WebSocket错误: {e}")
+                        logger.error(f"WebSocket错误: {e}")
                         await asyncio.sleep(1)
         except asyncio.CancelledError:
-            print("WebSocket任务被取消")
+            logger.info("WebSocket任务被取消")
         except Exception as e:
-            print(f"无法连接到服务器: {e}")
+            logger.error(f"无法连接到服务器: {e}")
 
     def stop(self):
         self.running = False
@@ -92,7 +93,7 @@ class WebSocketClientThread(QThread):
         if self.websocket and self.loop and self.loop.is_running():
             asyncio.run_coroutine_threadsafe(self.websocket.send(message), self.loop)
         else:
-            print("WebSocket未连接，消息未发送")
+            logger.warning("WebSocket未连接，消息未发送")
 
 
 class SerialPortThread(QThread):
@@ -129,7 +130,7 @@ class SerialPortThread(QThread):
             while self.running:
                 if self.serial_connection.in_waiting > 0:
                     data = self.serial_connection.readline().decode("ascii", errors="ignore").strip()
-                    print(f"[Serial from {self.port}] {data}")
+                    # logger.debug(f"[Serial from {self.port}] {data}")
                     self.message_received.emit(data)
                     if "Reset" in data:
                         self.timer_reset.emit()
@@ -221,8 +222,9 @@ class UdpServerThread(QThread):
     def run(self):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_server:
             udp_server.bind((self.host, self.port))
+            udp_server.settimeout(1.0)
 
-            while True:
+            while self.running:
                 try:
                     data, addr = udp_server.recvfrom(1024)
                 except socket.timeout:
@@ -232,11 +234,11 @@ class UdpServerThread(QThread):
                 try:
                     data_str = data.decode("utf-8", errors="ignore").strip()
                 except Exception as e:
-                    print(f"解码错误: {e}")
+                    logger.error(f"解码错误: {e}")
                     continue
 
                 # 打印收到的数据
-                print(f"[UDP from {addr}] {data_str}")
+                # logger.debug(f"[UDP from {addr}] {data_str}")
 
                 # 处理数据
                 if "Reset" in data_str:
