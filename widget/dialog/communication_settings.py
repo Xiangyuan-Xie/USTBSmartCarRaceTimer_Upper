@@ -191,9 +191,9 @@ class CommunicationSettingDialog(QDialog):
                 "AT",
                 f"AT+CWJAP=\"{self.set_ssid.text()}\",\"{self.set_password.text()}\"",
                 "AT+CIFSR",
+                "AT+CWAUTOCONN=1",
                 "AT+CIPMUX=0",
                 "AT+CIPMODE=1",
-                f"AT+CIPSTART=\"TCP\",\"{self.set_local_ip.text()}\",{self.set_listening_port.text()}",
                 f"AT+CIPSTART=\"UDP\",\"{self.set_local_ip.text()}\",{self.set_listening_port.text()}",
                 "AT+CIPSEND",
                 "+++",
@@ -279,9 +279,34 @@ class CommunicationSettingDialog(QDialog):
         timestamp = datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3]
         self.output_panel.append(f"{timestamp}({type}): {text}")
 
+    # def update_serial_connect_state(self):
+    #     # 指示灯
+    #     if self.communication_thread["串口"] and self.communication_thread["串口"].running:
+    #         self.serial_connect_state_display.setColor("Green")
+    #     else:
+    #         self.serial_connect_state_display.setColor("Red")
+    #         self.communication_thread["串口"] = None
+    #
+    #
+    #     # 按钮
+    #     if self.communication_thread["串口"]:
+    #         self.serial_port_connect_button.setText("关闭串口")
+    #     else:
+    #         self.serial_port_connect_button.setText("打开串口")
+    #
+    #     # 接收内容
+    #     if self.communication_thread["串口"]:
+    #         # 断开所有与message_received信号连接的槽函数
+    #         try:
+    #             self.communication_thread["串口"].message_received.disconnect()
+    #         except Exception:
+    #             pass
+    #
+    #         self.communication_thread["串口"].message_received.connect(self.update_output_panel)
     def update_serial_connect_state(self):
         # 指示灯
-        if self.communication_thread["串口"] and self.communication_thread["串口"].running:
+        serial_obj = self.communication_thread.get("串口")
+        if serial_obj and serial_obj.running:
             self.serial_connect_state_display.setColor("Green")
         else:
             self.serial_connect_state_display.setColor("Red")
@@ -293,14 +318,19 @@ class CommunicationSettingDialog(QDialog):
         else:
             self.serial_port_connect_button.setText("打开串口")
 
-        # 接收内容
-        if self.communication_thread["串口"]:
+        # 接收内容 - 更安全的信号管理
+        serial_obj = self.communication_thread.get("串口")
+        if serial_obj:
+            # 检查是否已经连接过
             try:
-                self.communication_thread["串口"].message_received.disconnect(self.update_output_panel)
-            except Exception:
+                # 尝试断开连接，如果存在的话
+                serial_obj.message_received.disconnect(self.update_output_panel)
+            except (RuntimeError, TypeError):
+                # 连接不存在或参数错误，忽略
                 pass
 
-            self.communication_thread["串口"].message_received.connect(self.update_output_panel)
+            # 连接信号
+            serial_obj.message_received.connect(self.update_output_panel)
 
     def update_tcp_server_state(self):
         # 指示灯

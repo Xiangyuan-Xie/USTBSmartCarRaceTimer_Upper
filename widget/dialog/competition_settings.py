@@ -14,6 +14,9 @@ class CompetitionSettingDialog(QDialog):
         self.setWindowTitle("比赛设置")
         self.configuration = configuration
 
+        # 预定义组别选项
+        self.category_options = ["摄像头组", "电磁组", "缩微光电组"]
+
         layout = QVBoxLayout()
 
         form_layout = QFormLayout()
@@ -27,8 +30,17 @@ class CompetitionSettingDialog(QDialog):
         self.set_stage = create_line_edit(self.configuration["比赛阶段"])
         form_layout.addRow(QLabel("比赛阶段:"), self.set_stage)
 
-        # 比赛组别
-        self.set_category = create_line_edit(self.configuration["比赛组别"])
+        # 比赛组别 - 使用下拉选择框
+        self.set_category = create_combo_box()
+        self.set_category.addItems(self.category_options)
+
+        # 设置当前选中的组别
+        current_category = self.configuration["比赛组别"]
+        if current_category in self.category_options:
+            self.set_category.setCurrentText(current_category)
+        else:
+            self.set_category.setCurrentText(self.category_options[0])  # 默认选择第一个
+
         form_layout.addRow(QLabel("比赛组别:"), self.set_category)
 
         # 保存与取消按钮
@@ -44,6 +56,6 @@ class CompetitionSettingDialog(QDialog):
     def save_data(self):
         self.configuration["比赛名称"] = self.set_title.text()
         self.configuration["比赛阶段"] = self.set_stage.text()
-        self.configuration["比赛组别"] = self.set_category.text()
+        self.configuration["比赛组别"] = self.set_category.currentText()  # 获取选择的文本
         self.setting_saved.emit()
         self.accept()
