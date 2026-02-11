@@ -35,7 +35,7 @@ class WebSocketClientThread(QThread):
         ]
 
     def run(self):
-        # 新建一个事件循环，避免阻塞主线程
+        # Create a new event loop to avoid blocking the main thread
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         try:
@@ -230,17 +230,17 @@ class UdpServerThread(QThread):
                 except socket.timeout:
                     continue
                 except OSError:
-                    break  # 套接字被关闭
+                    break  # Socket closed
                 try:
                     data_str = data.decode("utf-8", errors="ignore").strip()
                 except Exception as e:
                     logger.error(f"解码错误: {e}")
                     continue
 
-                # 打印收到的数据
+                # Print received data
                 # logger.debug(f"[UDP from {addr}] {data_str}")
 
-                # 处理数据
+                # Process data
                 if "Reset" in data_str:
                     self.timer_reset.emit()
                 else:

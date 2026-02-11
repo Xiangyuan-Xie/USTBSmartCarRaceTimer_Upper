@@ -1,4 +1,4 @@
-"""计时设置对话窗口"""
+"""Timer settings dialog window"""
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QFormLayout, QHBoxLayout, QPushButton, QSpinBox, QVBoxLayout
@@ -20,7 +20,7 @@ class TimerSettingDialog(BaseDialog):
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         form_layout.setSpacing(15)
 
-        # 速度计算
+        # Speed calculation
         self.set_speed_calculation = QCheckBox("启用速度计算")
         self.set_speed_calculation.setChecked(self.configuration["速度计算"])
         self.set_speed_calculation.setStyleSheet("""
@@ -29,7 +29,7 @@ class TimerSettingDialog(BaseDialog):
         """)
         layout.addWidget(self.set_speed_calculation)
 
-        # 赛道长度
+        # Track length
         self.set_length = create_spin_box(
             QDoubleSpinBox,
             min_value=0,
@@ -40,13 +40,13 @@ class TimerSettingDialog(BaseDialog):
         )
         form_layout.addRow("赛道长度:", self.set_length)
 
-        # 赛前准备时间
+        # Preparation time
         self.set_preparation_time = create_spin_box(
             QSpinBox, min_value=0, max_value=65535, current_value=self.configuration["赛前准备时间"], suffix=" 秒"
         )
         form_layout.addRow("赛前准备时间:", self.set_preparation_time)
 
-        # 比赛时间
+        # Competition time
         self.set_competition_time = create_spin_box(
             QSpinBox, min_value=0, max_value=65535, current_value=self.configuration["比赛时间"], suffix=" 秒"
         )
@@ -93,4 +93,4 @@ class TimerSettingDialog(BaseDialog):
             self.configuration["赛道长度"] = self.set_length.value()
             self.configuration["赛前准备时间"] = self.set_preparation_time.value()
             self.configuration["比赛时间"] = self.set_competition_time.value()
-            self.accept()  # 关闭对话框
+            self.accept()  # Close dialog

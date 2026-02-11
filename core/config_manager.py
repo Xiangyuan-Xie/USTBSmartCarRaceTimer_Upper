@@ -5,7 +5,7 @@ from loguru import logger
 
 
 class ConfigManager:
-    # 组别到Key的映射关系（统一管理，避免重复定义）
+    # Mapping of group names to Keys (unified management to avoid duplicate definitions)
     GROUP_KEY_MAPPING = {
         "摄像头组": "220dfce992d21aea4507065760ddfce7",
         "电磁组": "46840a1abb9fa373fe8daa1991bd53cd",
@@ -35,25 +35,25 @@ class ConfigManager:
     def load_config(self):
         if not os.path.exists(self.config_path):
             logger.warning(f"配置文件 {self.config_path} 不存在，使用默认配置。")
-            # 即使不存在配置文件，也要根据默认组别设置Key
+            # Set Key based on default group even if config file does not exist
             self._update_key_based_on_group()
             return
 
         try:
             with open(self.config_path, "r", encoding="utf-8") as file:
                 data = json.load(file)
-                # 处理罚时种类格式
+                # Handle penalty type format
                 if "罚时种类" in data and isinstance(data["罚时种类"], list):
                     data["罚时种类"] = [tuple(item) if isinstance(item, list) else item for item in data["罚时种类"]]
 
                 self.config.update(data)
 
-                # 检查缺失配置
+                # Check for missing config keys
                 missing_keys = [key for key in self.DEFAULT_CONFIG if key not in data]
                 if missing_keys:
                     logger.warning(f"配置文件缺失以下键: {missing_keys}，已使用默认值。")
 
-            # 根据比赛组别自动配置Key
+            # Automatically configure Key based on competition group
             self._update_key_based_on_group()
 
         except Exception as e:
@@ -61,7 +61,7 @@ class ConfigManager:
             self._update_key_based_on_group()
 
     def _update_key_based_on_group(self):
-        """根据比赛组别自动配置Key"""
+        """Automatically configure Key based on competition group"""
         group_name = self.config.get("比赛组别", "")
         if group_name in self.GROUP_KEY_MAPPING:
             old_key = self.config.get("Key", "未设置")

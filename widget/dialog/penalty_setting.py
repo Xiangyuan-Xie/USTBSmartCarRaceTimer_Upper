@@ -1,4 +1,4 @@
-"""罚时设置对话窗口"""
+"""Penalty settings dialog window"""
 
 from copy import deepcopy
 
@@ -34,17 +34,17 @@ class PenaltySettingDialog(BaseDialog):
         self.configuration = configuration
         self.penalties = deepcopy(configuration["罚时种类"])
 
-        # 创建布局
+        # Create layout
         layout = QVBoxLayout()
         layout.setSpacing(15)
 
-        # 导入按钮
+        # Import button
         self.import_button = QPushButton("从 Excel 导入罚时种类")
         self.import_button.setCursor(Qt.PointingHandCursor)
         self.import_button.clicked.connect(self.import_penalties)
         layout.addWidget(self.import_button)
 
-        # 滚动区域
+        # Scroll area
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setStyleSheet("""
@@ -52,7 +52,7 @@ class PenaltySettingDialog(BaseDialog):
         """)
         layout.addWidget(self.scroll_area)
 
-        # 显示区域
+        # Display area
         penalty_widget = QWidget()
         penalty_widget.setStyleSheet("background-color: #ffffff;")
         self.penalty_layout = QGridLayout(penalty_widget)
@@ -64,7 +64,7 @@ class PenaltySettingDialog(BaseDialog):
 
         self.scroll_area.setWidget(penalty_widget)
 
-        # 添加保存和取消按钮
+        # Add save and cancel buttons
         button_layout = QHBoxLayout()
         button_layout.addStretch()
 
@@ -105,20 +105,20 @@ class PenaltySettingDialog(BaseDialog):
             try:
                 df = pd.read_excel(file_name)
 
-                penalties_list = []  # 读入的罚时种类
-                invalid_rows = []  # 用于记录无效行的索引
+                penalties_list = []  # Read penalty types
+                invalid_rows = []  # To record invalid row indices
 
                 for index, row in df.iterrows():
-                    penalty_type = row[0]  # 第一列
-                    penalty_duration = row[1]  # 第二列
+                    penalty_type = row[0]  # First column
+                    penalty_duration = row[1]  # Second column
 
-                    # 类型检查
+                    # Type check
                     if isinstance(penalty_type, str) and isinstance(penalty_duration, (int, float)):
-                        penalties_list.append((penalty_type, int(penalty_duration)))  # 将有效元组添加到列表中
+                        penalties_list.append((penalty_type, int(penalty_duration)))  # Add valid tuple to list
                     else:
-                        invalid_rows.append(index + 1)  # 记录无效行的行号（+1 以符合 Excel 行号）
+                        invalid_rows.append(index + 1)  # Record invalid row number (+1 to match Excel row number)
 
-                # 合并罚时种类
+                # Merge penalty types
                 for new_penalty, new_duration in penalties_list:
                     found = False
                     for index, (penalty, duration) in enumerate(self.penalties):
@@ -129,7 +129,7 @@ class PenaltySettingDialog(BaseDialog):
                     if not found:
                         self.penalties.append((new_penalty, new_duration))
 
-                # 存在无效行
+                # Invalid rows exist
                 if invalid_rows:
                     invalid_rows_str = ", ".join(map(str, invalid_rows))
                     QMessageBox.warning(self, "警告", f"以下行的数据不符合格式：{invalid_rows_str}。请检查并重新导入。")
@@ -140,7 +140,7 @@ class PenaltySettingDialog(BaseDialog):
                 QMessageBox.critical(self, "错误", f"读取文件时出错：{e}")
 
     def update_penalty_list(self):
-        # 清除罚时面板中的所有控件
+        # Clear all widgets in the penalty panel
         while self.penalty_layout.count():
             item = self.penalty_layout.takeAt(0)
             if item.widget():

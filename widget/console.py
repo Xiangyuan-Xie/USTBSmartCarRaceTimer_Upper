@@ -847,7 +847,7 @@ class Console(QMainWindow):
             <div style='text-align: center;'>
             <h2>北京科技大学智能汽车竞赛计时器</h2>
             <p>作者：谢翔远</p>
-            <p>日期：2025年1月18日</p>
+            <p>日期：2026年2月12日</p>
             <p>版本：V2.0</p>
             <p><i>轮到你，为世界加速！</i></p>
             """,

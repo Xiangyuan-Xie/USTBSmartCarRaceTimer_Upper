@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QRect
+from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QWidget
 
@@ -6,25 +6,23 @@ from PySide6.QtWidgets import QWidget
 class RoundIndicator(QWidget):
     def __init__(self, color="red", size=20, margin=1, parent=None):
         super().__init__(parent)
-        self._color = QColor(color)  # 设置默认颜色
-        self.setFixedSize(size, size)  # 设置控件固定大小
-        self.margin = margin  # 设置间隙
+        self._color = QColor(color)  # Set default color
+        self.setFixedSize(size, size)  # Set fixed size for the widget
+        self.margin = margin  # Set margin
 
     def setColor(self, color):
         self._color = QColor(color)
-        self.update()  # 重绘控件
+        self.update()  # Repaint the widget
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)  # 开启抗锯齿
-        painter.setBrush(self._color)  # 设置填充颜色
-        painter.setPen(Qt.PenStyle.NoPen)  # 无边框
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)  # Enable antialiasing
+        painter.setBrush(self._color)  # Set fill color
+        painter.setPen(Qt.PenStyle.NoPen)  # No border
 
-        # 确保圆形在控件中间并且留有间隙
-        diameter = min(self.width(), self.height()) - 2 * self.margin  # 减去间隙
-        rect = QRect(self.margin, self.margin, diameter, diameter)  # 绘制区域
-        rect.moveCenter(self.rect().center())  # 确保圆形居中
+        # Ensure the circle is in the center and has margin
+        diameter = min(self.width(), self.height()) - 2 * self.margin  # Subtract margin
+        rect = QRect(self.margin, self.margin, diameter, diameter)  # Drawing area
+        rect.moveCenter(self.rect().center())  # Ensure circle is centered
 
-        painter.drawEllipse(rect)  # 绘制圆形
-
-
+        painter.drawEllipse(rect)  # Draw circle

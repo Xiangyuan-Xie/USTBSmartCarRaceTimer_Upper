@@ -1,4 +1,4 @@
-"""手动添加成绩对话窗口"""
+"""Manually add record dialog window"""
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QDoubleSpinBox, QFormLayout, QLabel, QVBoxLayout
@@ -20,19 +20,25 @@ class AddRecordDialog(BaseDialog):
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # 成绩1
-        self.add_record1 = create_spin_box(QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒")
+        # Record 1
+        self.add_record1 = create_spin_box(
+            QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒"
+        )
         form_layout.addRow(QLabel("比赛成绩1:"), self.add_record1)
 
-        # 成绩2
-        self.add_record2 = create_spin_box(QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒")
+        # Record 2
+        self.add_record2 = create_spin_box(
+            QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒"
+        )
         form_layout.addRow(QLabel("比赛成绩2:"), self.add_record2)
 
-        # 成绩3
-        self.add_record3 = create_spin_box(QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒")
+        # Record 3
+        self.add_record3 = create_spin_box(
+            QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒"
+        )
         form_layout.addRow(QLabel("比赛成绩3:"), self.add_record3)
 
-        # 保存和取消按钮
+        # Save and cancel buttons
         self.submit_button = create_button("保存", style="")
         self.submit_button.clicked.connect(self.save_data)
         self.cancel_button = create_button("取消", style="")

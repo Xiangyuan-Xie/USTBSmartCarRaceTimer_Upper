@@ -1,9 +1,9 @@
-"""比赛设置对话窗口"""
+"""Competition settings dialog window"""
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QPushButton, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
-from widget.common import create_line_edit, create_combo_box
+from widget.common import create_combo_box, create_line_edit
 from widget.dialog.base import BaseDialog
 
 
@@ -15,7 +15,7 @@ class CompetitionSettingDialog(BaseDialog):
         self.setWindowTitle("比赛设置")
         self.configuration = configuration
 
-        # 预定义组别选项
+        # Predefined group options
         self.category_options = ["摄像头组", "电磁组", "缩微光电组"]
 
         layout = QVBoxLayout()
@@ -24,24 +24,24 @@ class CompetitionSettingDialog(BaseDialog):
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)  # Right align labels usually looks better
         form_layout.setSpacing(15)
 
-        # 比赛名称
+        # Competition name
         self.set_title = create_line_edit(self.configuration["比赛名称"])
         form_layout.addRow("比赛名称:", self.set_title)
 
-        # 比赛阶段
+        # Competition stage
         self.set_stage = create_line_edit(self.configuration["比赛阶段"])
         form_layout.addRow("比赛阶段:", self.set_stage)
 
-        # 比赛组别 - 使用下拉选择框
+        # Competition group - Use dropdown selection
         self.set_category = create_combo_box()
         self.set_category.addItems(self.category_options)
 
-        # 设置当前选中的组别
+        # Set currently selected group
         current_category = self.configuration["比赛组别"]
         if current_category in self.category_options:
             self.set_category.setCurrentText(current_category)
         else:
-            self.set_category.setCurrentText(self.category_options[0])  # 默认选择第一个
+            self.set_category.setCurrentText(self.category_options[0])  # Default to the first one
 
         form_layout.addRow(QLabel("比赛组别:"), self.set_category)
 
@@ -81,6 +81,6 @@ class CompetitionSettingDialog(BaseDialog):
     def save_data(self):
         self.configuration["比赛名称"] = self.set_title.text()
         self.configuration["比赛阶段"] = self.set_stage.text()
-        self.configuration["比赛组别"] = self.set_category.currentText()  # 获取选择的文本
+        self.configuration["比赛组别"] = self.set_category.currentText()  # Get selected text
         self.setting_saved.emit()
         self.accept()

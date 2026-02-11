@@ -48,7 +48,7 @@ class DataManager:
 
     def set_team_list(self, team_list):
         self.race_data["队伍名单"] = team_list
-        # 重置比赛进度
+        # Reset race progress
         self.race_data["比赛进度"] = 0
 
     def next_team(self):

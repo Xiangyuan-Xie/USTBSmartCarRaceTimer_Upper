@@ -15,7 +15,7 @@ logger.add(
 
 
 def generate_order(group, seed):
-    """根据组别和随机种子生成抽签顺序标签"""
+    """Generate drawing order tags based on group and random seed"""
     group_dict = {"镜头组": 18, "电磁组": 20, "缩微光电组": 9}
 
     if group not in group_dict:
@@ -24,7 +24,7 @@ def generate_order(group, seed):
     prefix = "A" if group == "镜头组" else "B" if group == "电磁组" else "D"
     order = [f"{prefix}{i}" for i in range(1, group_dict[group] + 1)]
 
-    # 防止 seed 超范围
+    # Prevent seed overflow
     random.seed(seed % (2**32))
     random.shuffle(order)
     return order
@@ -55,18 +55,18 @@ def process_table(group, seed):
     if len(df) != len(shuffled_order):
         raise ValueError(f"表格行数({len(df)})与组别预期数({len(shuffled_order)})不一致")
 
-    # 打乱顺序
+    # Shuffle order
     df = df.sample(frac=1, random_state=seed % (2**32)).reset_index(drop=True)
 
     output_file = desktop_path / f"抽签结果_{group}.xlsx"
 
-    # 保存结果（不加 index，不加表头）
+    # Save result (no index, no header)
     df.to_excel(output_file, index=False, header=False)
 
     return df, output_file
 
 
-# 示例运行
+# Example run
 if __name__ == "__main__":
     seed = 202511301213
     group = "电磁组"
