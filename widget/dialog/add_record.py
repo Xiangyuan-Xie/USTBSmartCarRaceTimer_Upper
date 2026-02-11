@@ -20,15 +20,15 @@ class AddRecordDialog(QDialog):
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # 成绩1
-        self.add_record1 = create_spin_box(QDoubleSpinBox, min_value=0, current_value=0, decimals=3, suffix=" 秒")
+        self.add_record1 = create_spin_box(QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒")
         form_layout.addRow(QLabel("比赛成绩1:"), self.add_record1)
 
         # 成绩2
-        self.add_record2 = create_spin_box(QDoubleSpinBox, min_value=0, current_value=0, decimals=3, suffix=" 秒")
+        self.add_record2 = create_spin_box(QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒")
         form_layout.addRow(QLabel("比赛成绩2:"), self.add_record2)
 
         # 成绩3
-        self.add_record3 = create_spin_box(QDoubleSpinBox, min_value=0, current_value=0, decimals=3, suffix=" 秒")
+        self.add_record3 = create_spin_box(QDoubleSpinBox, min_value=0, max_value=999, current_value=0, decimals=3, suffix=" 秒")
         form_layout.addRow(QLabel("比赛成绩3:"), self.add_record3)
 
         # 保存和取消按钮

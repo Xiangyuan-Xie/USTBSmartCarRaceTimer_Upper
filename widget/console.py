@@ -3,6 +3,7 @@ import os
 
 import chardet
 from PySide6.QtGui import QGuiApplication, QAction
+from PySide6.QtCore import QRect, Qt
 from PySide6.QtWidgets import QMainWindow, QMenu, QApplication
 from openpyxl import Workbook
 
@@ -12,6 +13,13 @@ from widget.screen import *
 
 
 class Console(QMainWindow):
+    # 组别到Key的映射关系（统一管理，避免重复定义）
+    GROUP_KEY_MAPPING = {
+        "摄像头组": "220dfce992d21aea4507065760ddfce7",
+        "电磁组": "46840a1abb9fa373fe8daa1991bd53cd",
+        "缩微光电组": "141d48c6c30c722025d1e75e1fafcb87"
+    }
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("北京科技大学智能汽车竞赛计时器控制台 V2.0")
@@ -21,6 +29,7 @@ class Console(QMainWindow):
             "串口": None,
             "TCP": None,
             "UDP": None,
+            "WS": None,
         }
         self.real_time = 0
         self.audio_path = {
@@ -41,8 +50,10 @@ class Console(QMainWindow):
                 ("停车失败", -10),
                 ("碰撞小型路障", -10)
             ],
-            "SSID": "LAPTOP-XXY",
-            "Password": "12345000"
+            "SSID": "LAPTOP-LYL",
+            "Password": "idol0920",
+            "Key": "",
+            "投屏缩放比例": 1.0  # 投屏分辨率缩放比例，默认1.0（100%）
         }
 
         # 读取配置文件
@@ -55,6 +66,19 @@ class Console(QMainWindow):
         except Exception:
             self.configuration = self.default_configuration
             self._show_warning("读取配置文件失败，将使用默认配置！")
+            # 打印默认key值
+            print(f"使用默认配置: 组别={self.configuration['比赛组别']}, Key={self.configuration['Key']}")
+
+        # 根据比赛组别自动配置Key（在检查缺失配置之前执行，确保Key始终与组别匹配）
+        # 即使JSON文件中的Key错误，也会根据组别自动更新为正确的Key
+        group_name = self.configuration.get("比赛组别", "")
+        if group_name in self.GROUP_KEY_MAPPING:
+            old_key = self.configuration.get("Key", "未设置")
+            self.configuration["Key"] = self.GROUP_KEY_MAPPING[group_name]
+            if old_key != self.configuration["Key"]:
+                print(f"根据组别自动更新Key: 组别={group_name}, 旧Key={old_key}, 新Key={self.configuration['Key']}")
+            else:
+                print(f"根据组别自动配置Key: 组别={group_name}, Key={self.configuration['Key']}")
 
         # 检查配置文件
         missing_config = []
@@ -134,6 +158,10 @@ class Console(QMainWindow):
         penalty_action = QAction("罚时设置", self)
         penalty_action.triggered.connect(lambda: self.open_dialog("罚时设置"))
         set_menu.addAction(penalty_action)
+
+        screen_action = QAction("投屏设置", self)
+        screen_action.triggered.connect(lambda: self.open_dialog("投屏设置"))
+        set_menu.addAction(screen_action)
 
         # 投屏
         project_menu = menu_bar.addMenu("投屏")
@@ -284,6 +312,8 @@ class Console(QMainWindow):
         self.update_team_information()
         self.update_timer_display()
         self.update_penalty_panel()
+        self.communication_thread["WS"] = WebSocketClientThread()
+        self.communication_thread["WS"].start()
 
     def update_status(self, message):
         self.status_bar.showMessage(f"{datetime.datetime.now().strftime('%H:%M:%S')}: " + message, 0)
@@ -403,6 +433,7 @@ class Console(QMainWindow):
             "比赛设置": CompetitionSettingDialog(self.configuration),
             "计时设置": TimerSettingDialog(self.configuration, self.race_data["比赛进度"]),
             "罚时设置": PenaltySettingDialog(self.configuration),
+            "投屏设置": ScreenSettingDialog(self.configuration),
             "修改剩余时间": ModifyTimeDialog(self.race_data["队伍名单"][self.race_data["比赛进度"]]),
             "添加比赛成绩": AddRecordDialog(self.race_data["队伍名单"][self.race_data["比赛进度"]])
         }
@@ -462,6 +493,10 @@ class Console(QMainWindow):
         self.communication_thread["UDP"].start()
 
     def update_title_settings(self):
+        # 根据比赛组别设置对应的Key值（使用统一的映射关系）
+        group_name = self.configuration["比赛组别"]
+        if group_name in self.GROUP_KEY_MAPPING:
+            self.configuration["Key"] = self.GROUP_KEY_MAPPING[group_name]
         self.race.setText(
             self.configuration["比赛名称"] + self.configuration["比赛阶段"] + self.configuration["比赛组别"])
 
@@ -503,9 +538,10 @@ class Console(QMainWindow):
         screens = QApplication.screens()
 
         if 0 <= screen_index < len(screens):
-            # 将全屏窗口移到指定的屏幕并显示全屏
-            target_screen = screens[screen_index - 1]
-            self.full_screen_window.setGeometry(target_screen.geometry())
+            # 将全屏窗口移到指定的屏幕，始终全屏显示
+            target_screen = screens[screen_index]
+            screen_geometry = target_screen.geometry()
+            self.full_screen_window.setGeometry(screen_geometry)
             self.full_screen_window.showFullScreen()
 
             # 信息更新
@@ -616,6 +652,13 @@ class Console(QMainWindow):
                 time_text = f'{minutes} 分 {seconds} 秒'
             self.remaining_time_display.setText(time_text)
             self.update_full_screen_display("remaining_time_display", f'{time_text}')
+            team_data = {
+                **self.race_data["队伍名单"][progress],
+                "Key": self.configuration["Key"]
+            }
+            json_str = json.dumps(team_data, ensure_ascii=False, indent=2)
+            if self.communication_thread["WS"] != None:
+                self.communication_thread["WS"].send_message(json_str)
         else:
             self.remaining_time_display.setText("Null")
             self.update_full_screen_display("remaining_time_display", "Null")
@@ -737,6 +780,9 @@ class Console(QMainWindow):
         # 更新最好成绩显示
         team_data["最好成绩"] = best_record
         self.best_record_display.setText(f'{best_record:.3f}s')
+        json_str = json.dumps(self.race_data["队伍名单"][progress], ensure_ascii=False, indent=2)
+        if self.communication_thread["WS"] != None:
+            self.communication_thread["WS"].send_message(json_str)
 
     def add_record(self, time):
         progress = self.race_data["比赛进度"]
@@ -865,15 +911,50 @@ class Console(QMainWindow):
             self.update_record_option()
             self.update_penalty_area()
 
+    def save_configuration(self):
+        """保存配置到config.json文件"""
+        # 根据比赛组别设置对应的Key值（使用统一的映射关系，确保保存时Key也是正确的）
+        group_name = self.configuration["比赛组别"]
+        if group_name in self.GROUP_KEY_MAPPING:
+            self.configuration["Key"] = self.GROUP_KEY_MAPPING[group_name]
+
+        # 保存到文件
+        try:
+            with open("config.json", "w", encoding="utf-8") as file:
+                json.dump(self.configuration, file, ensure_ascii=False, indent=4)
+        except Exception as e:
+            self._show_warning(f"保存配置文件失败：{e}")
+
+    def closeEvent(self, event):
+        """窗口关闭事件，保存配置"""
+        self.save_configuration()
+        event.accept()
+
     def audio_play(self, type):
         path = self.audio_path[type]
-        self.task = AudioPlayThread(path)
-        self.task.start()
+        if not hasattr(self, 'task') or not self.task.isRunning():
+            self.task = AudioPlayThread(path)
+            self.task.start()
         if type == "重置":
             self.update_status("计时器已手动重置！")
             self.update_real_time_display(0)
         else:
             self.update_status("当前队伍比赛时间结束！")
+
+    def get_group_filename(group_name):
+        """
+        根据比赛组别获取对应的文件名
+        :param group_name: 比赛组别名称
+        :return: 对应的文件名（不带扩展名）
+        """
+        group_mapping = {
+            "摄像头组": "micro_electro",
+            "电磁组": "electro_magnetic",
+            "缩微光电组": "speed_electro"
+        }
+
+        # 如果组别在映射中，则返回对应的文件名，否则返回默认值
+        return group_mapping.get(group_name, "micro_electro")
 
 
 def search_file(filename, search_root=None):

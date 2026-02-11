@@ -70,14 +70,15 @@ def create_spin_box(spin_box_type, min_value=None, max_value=None, current_value
     """
     spin_box = spin_box_type()
 
-    if min_value and max_value:
+    # 使用 is not None 来检查，因为 min_value 可能是 0
+    if min_value is not None and max_value is not None:
         spin_box.setRange(min_value, max_value)
-    elif min_value:
-        spin_box.setValue(min_value)
-    elif max_value:
-        spin_box.setValue(max_value)
+    elif min_value is not None:
+        spin_box.setMinimum(min_value)
+    elif max_value is not None:
+        spin_box.setMaximum(max_value)
 
-    if current_value:
+    if current_value is not None:
         spin_box.setValue(current_value)
 
     if single_step:

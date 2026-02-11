@@ -1,27 +1,71 @@
 #!/usr/bin/env python3
-# 北京科技大学智能汽车竞赛第二次分站赛抽签代码
-
 import random
+import pandas as pd
+from pathlib import Path
 
 
 def generate_order(group, seed):
+    """根据组别和随机种子生成抽签顺序标签"""
     group_dict = {
-        "摄像头组": 18,
-        "电磁组": 16
+        "镜头组": 18,
+        "电磁组": 20,
+        "缩微光电组": 9
     }
 
     if group not in group_dict:
         raise ValueError(f"未知的组别: {group}")
 
-    # 修改为从1开始编号
-    order = [f"{'A' if group == '摄像头组' else 'B'}{i}" for i in range(1, group_dict[group] + 1)]
+    prefix = 'A' if group == '镜头组' else 'B' if group == '电磁组' else 'D'
+    order = [f"{prefix}{i}" for i in range(1, group_dict[group] + 1)]
 
-    random.seed(seed)
+    # 防止 seed 超范围
+    random.seed(seed % (2**32))
     random.shuffle(order)
     return order
 
 
-seed = 11212531320410  # 设置随机种子(本周六超级大乐透开奖号码,开奖后自行设置)
-group = "摄像头组"
-shuffled_order = generate_order(group, seed)
-print(shuffled_order)
+def process_table(group, seed):
+    file_prefix = 'A' if group == '镜头组' else 'B' if group == '电磁组' else 'D'
+    desktop_path = Path.home() / 'Desktop'
+
+    file_path = None
+    for ext in ['.xlsx', '.xls', '.csv']:
+        potential_file = desktop_path / f"{file_prefix}{ext}"
+        if potential_file.exists():
+            file_path = potential_file
+            break
+
+    if file_path is None:
+        raise FileNotFoundError(f"未找到 {file_prefix} 表格文件，请放在桌面并命名为 {file_prefix}.xlsx 或 {file_prefix}.csv")
+
+    if file_path.suffix == '.csv':
+        df = pd.read_csv(file_path, header=None)
+    else:
+        df = pd.read_excel(file_path, header=None)
+
+    shuffled_order = generate_order(group, seed)
+    if len(df) != len(shuffled_order):
+        raise ValueError(f"表格行数({len(df)})与组别预期数({len(shuffled_order)})不一致")
+
+    # 打乱顺序
+    df = df.sample(frac=1, random_state=seed % (2**32)).reset_index(drop=True)
+
+    output_file = desktop_path / f"抽签结果_{group}.xlsx"
+
+    # 保存结果（不加 index，不加表头）
+    df.to_excel(output_file, index=False, header=False)
+
+    return df, output_file
+
+
+
+# 示例运行
+if __name__ == "__main__":
+    seed = 202511301213
+    group = "电磁组"
+
+    try:
+        result_df, output_path = process_table(group, seed)
+        print(f"抽签结果已生成: {output_path}")
+    except Exception as e:
+        print(f"错误: {e}")
