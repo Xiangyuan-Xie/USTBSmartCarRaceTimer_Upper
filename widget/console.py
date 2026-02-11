@@ -106,10 +106,6 @@ class Console(QMainWindow):
         # Initialize UI
         self._init_ui()
 
-        # Initialize Remote WS Client
-        if self.config_manager.get("WebSocketEnabled", False):
-            self.open_websocket_client((self.config_manager.get("WebSocketURI", "ws://117.72.54.78:4001"),))
-
         # Timer for countdown
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_timer)
@@ -773,7 +769,7 @@ class Console(QMainWindow):
         self.communication_thread["WS"].start()
         self.update_status(f"WebSocket客户端已启动，正在连接 {config[0]}...")
         # Update config
-        self.config_manager.set("WebSocketEnabled", True)
+        # self.config_manager.set("WebSocketEnabled", True)
         self.config_manager.set("WebSocketURI", config[0])
 
     def _connect_communication_signals(self, thread):

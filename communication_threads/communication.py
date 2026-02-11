@@ -8,13 +8,6 @@ from PySide6.QtCore import QThread, Signal
 
 
 def parse_data(data, pattern_callbacks):
-    """
-    通用函数，用于匹配指定模式并触发相应的回调。
-
-    :param data: str，要解析的字符串。
-    :param pattern_callbacks: list，包含元组，每个元组定义一个模式和回调函数。
-                              格式为 [(pattern, callback), ...]。
-    """
     for pattern, callback in pattern_callbacks:
         match = re.search(pattern, data)
         if match:
@@ -44,7 +37,12 @@ class WebSocketClientThread(QThread):
         # 新建一个事件循环，避免阻塞主线程
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.websocket_loop())
+        try:
+            self.loop.run_until_complete(self.websocket_loop())
+        except Exception as e:
+            print(f"WebSocket循环结束: {e}")
+        finally:
+            self.loop.close()
 
     async def websocket_loop(self):
         try:
@@ -74,22 +72,24 @@ class WebSocketClientThread(QThread):
                     except Exception as e:
                         print(f"WebSocket错误: {e}")
                         await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            print("WebSocket任务被取消")
         except Exception as e:
             print(f"无法连接到服务器: {e}")
 
     def stop(self):
         self.running = False
         if self.loop and self.loop.is_running():
-            # Stop the loop safely
-            for task in asyncio.all_tasks(self.loop):
-                task.cancel()
-            self.loop.call_soon_threadsafe(self.loop.stop)
+            # Stop the loop safely by cancelling tasks
+            self.loop.call_soon_threadsafe(self._cancel_tasks)
         self.wait()
 
+    def _cancel_tasks(self):
+        for task in asyncio.all_tasks(self.loop):
+            task.cancel()
+
     def send_message(self, message: str):
-        """发送消息，如果未连接则忽略"""
         if self.websocket and self.loop and self.loop.is_running():
-            # 确保在事件循环线程安全调用
             asyncio.run_coroutine_threadsafe(self.websocket.send(message), self.loop)
         else:
             print("WebSocket未连接，消息未发送")

@@ -15,5 +15,5 @@
     "SSID": "LYL",
     "Password": "12345678",
     "Key": "141d48c6c30c722025d1e75e1fafcb87",
-    "投屏缩放比例": 1.0
+    "WebSocketURI": "ws://117.72.54.78:4001"
 }
