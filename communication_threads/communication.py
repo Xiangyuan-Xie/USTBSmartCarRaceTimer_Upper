@@ -1,8 +1,9 @@
+import asyncio
 import re
 import socket
-import asyncio
-import websockets
+
 import serial
+import websockets
 from PySide6.QtCore import QThread, Signal
 
 
@@ -19,6 +20,7 @@ def parse_data(data, pattern_callbacks):
         if match:
             message = float(match.group(1)) / 1000
             callback(message)
+
 
 class WebSocketClientThread(QThread):
     real_received = Signal(float)
@@ -51,7 +53,7 @@ class WebSocketClientThread(QThread):
                 print(f"已连接到 {self.uri}")
                 while self.running:
                     try:
-                        data = await self.websocket.recv()
+                        data = await asyncio.wait_for(self.websocket.recv(), timeout=1.0)
                         data = data.strip()
                         self.message_received.emit(data)
                         print(f"[WS] {data}")
@@ -64,6 +66,8 @@ class WebSocketClientThread(QThread):
                             except Exception:
                                 continue
 
+                    except asyncio.TimeoutError:
+                        continue
                     except websockets.ConnectionClosed:
                         print("服务器连接关闭")
                         break
@@ -76,7 +80,12 @@ class WebSocketClientThread(QThread):
     def stop(self):
         self.running = False
         if self.loop and self.loop.is_running():
+            # Stop the loop safely
+            for task in asyncio.all_tasks(self.loop):
+                task.cancel()
             self.loop.call_soon_threadsafe(self.loop.stop)
+        self.wait()
+
     def send_message(self, message: str):
         """发送消息，如果未连接则忽略"""
         if self.websocket and self.loop and self.loop.is_running():
@@ -84,6 +93,7 @@ class WebSocketClientThread(QThread):
             asyncio.run_coroutine_threadsafe(self.websocket.send(message), self.loop)
         else:
             print("WebSocket未连接，消息未发送")
+
 
 class SerialPortThread(QThread):
     real_received = Signal(float)
@@ -220,7 +230,7 @@ class UdpServerThread(QThread):
                 except OSError:
                     break  # 套接字被关闭
                 try:
-                    data_str = data.decode('utf-8', errors='ignore').strip()
+                    data_str = data.decode("utf-8", errors="ignore").strip()
                 except Exception as e:
                     print(f"解码错误: {e}")
                     continue

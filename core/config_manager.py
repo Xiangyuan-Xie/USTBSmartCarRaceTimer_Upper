@@ -8,7 +8,7 @@ class ConfigManager:
     GROUP_KEY_MAPPING = {
         "摄像头组": "220dfce992d21aea4507065760ddfce7",
         "电磁组": "46840a1abb9fa373fe8daa1991bd53cd",
-        "缩微光电组": "141d48c6c30c722025d1e75e1fafcb87"
+        "缩微光电组": "141d48c6c30c722025d1e75e1fafcb87",
     }
 
     DEFAULT_CONFIG = {
@@ -23,7 +23,6 @@ class ConfigManager:
         "SSID": "LAPTOP-XXY",
         "Password": "12345000",
         "Key": "",
-        "投屏缩放比例": 1.0  # 投屏分辨率缩放比例，默认1.0（100%）
     }
 
     def __init__(self, config_path="config.json"):
@@ -51,7 +50,7 @@ class ConfigManager:
                 missing_keys = [key for key in self.DEFAULT_CONFIG if key not in data]
                 if missing_keys:
                     logging.warning(f"配置文件缺失以下键: {missing_keys}，已使用默认值。")
-            
+
             # 根据比赛组别自动配置Key
             self._update_key_based_on_group()
 
@@ -70,7 +69,6 @@ class ConfigManager:
                 logging.info(f"根据组别自动更新Key: 组别={group_name}, 旧Key={old_key}, 新Key={new_key}")
             else:
                 logging.info(f"根据组别自动配置Key: 组别={group_name}, Key={new_key}")
-
 
     def save_config(self):
         try:

@@ -5,7 +5,6 @@ from .competition_settings import CompetitionSettingDialog
 from .modify_time import ModifyTimeDialog
 from .penalty_setting import PenaltySettingDialog
 from .timer_setting import TimerSettingDialog
-from .screen_settings import ScreenSettingDialog
 
 __all__ = [
     "InfoDialog",
@@ -16,5 +15,4 @@ __all__ = [
     "PenaltySettingDialog",
     "CompetitionSettingDialog",
     "TimerSettingDialog",
-    "ScreenSettingDialog",
 ]

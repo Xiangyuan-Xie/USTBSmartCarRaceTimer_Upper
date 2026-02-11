@@ -182,12 +182,9 @@ class FullScreenWindow(QWidget):
     def _update_fonts(self):
         w = self.width()
         h = self.height()
-        
-        # Get scale factor from config
-        scale_factor = self.configuration.get("投屏缩放比例", 1.0)
 
         # Scale factor based on diagonal or min dimension
-        base_size = min(w, h) * scale_factor
+        base_size = min(w, h)
 
         title_font = QFont("Microsoft YaHei", int(base_size // 25), QFont.Weight.Bold)
         sub_font = QFont("Microsoft YaHei", int(base_size // 35), QFont.Weight.Bold)

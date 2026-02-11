@@ -1,13 +1,13 @@
 import datetime
 import functools
+import json
 import os
 import socket
-import json
 
 import chardet
 import pandas as pd
 from openpyxl import Workbook
-from PySide6.QtCore import Qt, QTimer, QUrl, QRect
+from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QDesktopServices, QFont, QGuiApplication
 from PySide6.QtWidgets import (
     QApplication,
@@ -25,7 +25,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from communication_threads.communication import SerialPortThread, TcpServerThread, UdpServerThread, WebSocketClientThread
+from communication_threads.communication import (
+    SerialPortThread,
+    TcpServerThread,
+    UdpServerThread,
+    WebSocketClientThread,
+)
 from core.audio_manager import AudioManager
 from core.config_manager import ConfigManager
 from core.data_manager import DataManager
@@ -39,7 +44,6 @@ from widget.dialog import (
     ModifyTimeDialog,
     PenaltySettingDialog,
     TimerSettingDialog,
-    ScreenSettingDialog,
 )
 from widget.screen import FullScreenWindow
 
@@ -49,7 +53,7 @@ class Console(QMainWindow):
     GROUP_KEY_MAPPING = {
         "摄像头组": "220dfce992d21aea4507065760ddfce7",
         "电磁组": "46840a1abb9fa373fe8daa1991bd53cd",
-        "缩微光电组": "141d48c6c30c722025d1e75e1fafcb87"
+        "缩微光电组": "141d48c6c30c722025d1e75e1fafcb87",
     }
 
     def __init__(self):
@@ -524,7 +528,6 @@ class Console(QMainWindow):
             ("比赛设置", self.open_dialog),
             ("计时设置", self.open_dialog),
             ("罚时设置", self.open_dialog),
-            ("投屏设置", self.open_dialog),
         ]
 
         for name, slot in settings_actions:
@@ -575,11 +578,11 @@ class Console(QMainWindow):
         ws_data = current_team.copy()
         ws_data["Key"] = self.config_manager.get("Key", "")
         if self.communication_thread.get("WS"):
-             try:
-                 json_str = json.dumps(ws_data, ensure_ascii=False)
-                 self.communication_thread["WS"].send_message(json_str)
-             except Exception:
-                 pass
+            try:
+                json_str = json.dumps(ws_data, ensure_ascii=False)
+                self.communication_thread["WS"].send_message(json_str)
+            except Exception:
+                pass
 
     def update_status(self, message):
         self.status_bar.showMessage(f"{datetime.datetime.now().strftime('%H:%M:%S')}: {message}", 0)
@@ -734,8 +737,6 @@ class Console(QMainWindow):
         elif dialog_type == "罚时设置":
             dialog = PenaltySettingDialog(config)
             dialog.setting_saved.connect(self.update_penalty_panel)
-        elif dialog_type == "投屏设置":
-            dialog = ScreenSettingDialog(config)
         elif dialog_type == "修改剩余时间":
             if current_team["是否暂停"]:
                 dialog = ModifyTimeDialog(current_team)
@@ -942,10 +943,7 @@ class Console(QMainWindow):
             progress = self.data_manager.get_current_team_index()
             team_list = self.data_manager.get_team_list()
             if 0 <= progress < len(team_list):
-                team_data = {
-                    **team_list[progress],
-                    "Key": self.config_manager.get("Key")
-                }
+                team_data = {**team_list[progress], "Key": self.config_manager.get("Key")}
                 json_str = json.dumps(team_data, ensure_ascii=False, indent=2)
                 if self.communication_thread["WS"] is not None:
                     self.communication_thread["WS"].send_message(json_str)
@@ -1049,7 +1047,7 @@ class Console(QMainWindow):
         best_record = min(valid_times, default=999.999)
         current_team["最好成绩"] = best_record
         self.best_record_display.setText(f"{best_record:.3f}s")
-        
+
         # Broadcast update
         self.broadcast_current_state()
 
