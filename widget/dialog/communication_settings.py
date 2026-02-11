@@ -1,4 +1,4 @@
-""" 通信设置对话窗口 """
+"""通信设置对话窗口"""
 
 import datetime
 import socket
@@ -7,13 +7,14 @@ import psutil
 import serial.tools.list_ports
 from PySide6.QtCore import QTimer, Signal
 from PySide6.QtGui import QTextOption
-from PySide6.QtWidgets import QVBoxLayout, QDialog, QMessageBox, QGridLayout, QTextEdit, QTabWidget, QScrollArea
+from PySide6.QtWidgets import QGridLayout, QMessageBox, QScrollArea, QTabWidget, QTextEdit, QVBoxLayout, QWidget
 
-from widget.common import *
-from widget.round_indicator import *
+from widget.common import create_button, create_combo_box, create_label, create_line_edit
+from widget.dialog.base import BaseDialog
+from widget.round_indicator import RoundIndicator
 
 
-class CommunicationSettingDialog(QDialog):
+class CommunicationSettingDialog(BaseDialog):
     serial_port_state_changed = Signal(tuple)
     tcp_server_state_changed = Signal(tuple)
     udp_server_state_changed = Signal(tuple)
@@ -61,7 +62,8 @@ class CommunicationSettingDialog(QDialog):
         baud_rate = create_label("波特率:")
         communication_setting_layout.addWidget(baud_rate, 4, 0)
         self.set_baud_rate = create_combo_box(
-            ["9600", "14400", "19200", "38400", "57600", "115200", "128000", "256000"], "115200")
+            ["9600", "14400", "19200", "38400", "57600", "115200", "128000", "256000"], "115200"
+        )
         communication_setting_layout.addWidget(self.set_baud_rate, 4, 1)
 
         # 串口连接按钮（通信设置页）
@@ -125,9 +127,9 @@ class CommunicationSettingDialog(QDialog):
         esp_debug_layout.addWidget(local_ip, 2, 0)
         ip = None
         for interface, addrs in psutil.net_if_addrs().items():
-            if 'vEthernet' in interface:  # 排除虚拟适配器，如包含 'vEthernet' 的适配器
+            if "vEthernet" in interface:  # 排除虚拟适配器，如包含 'vEthernet' 的适配器
                 continue  # 跳过虚拟适配器
-            if 'wlan' in interface.lower() or 'wi-fi' in interface.lower():  # 只匹配无线适配器接口名称（wlan 或 Wi-Fi）
+            if "wlan" in interface.lower() or "wi-fi" in interface.lower():  # 只匹配无线适配器接口名称（wlan 或 Wi-Fi）
                 for addr in addrs:
                     if addr.family == socket.AF_INET:  # 检查是否为 IPv4 地址
                         ip = addr.address
@@ -162,7 +164,7 @@ class CommunicationSettingDialog(QDialog):
         self.tab_widget.addTab(esp_debug, "ESP调试")
         layout.addWidget(self.tab_widget)
 
-        self.setLayout(layout)
+        self.set_content_layout(layout)
 
         self.update_ui()
         self.refresh_serial_ports()
@@ -189,12 +191,13 @@ class CommunicationSettingDialog(QDialog):
             self.select_command.clear()
             commands = [
                 "AT",
-                f"AT+CWJAP=\"{self.set_ssid.text()}\",\"{self.set_password.text()}\"",
+                f'AT+CWJAP="{self.set_ssid.text()}","{self.set_password.text()}"',
                 "AT+CIFSR",
                 "AT+CWAUTOCONN=1",
                 "AT+CIPMUX=0",
                 "AT+CIPMODE=1",
-                f"AT+CIPSTART=\"UDP\",\"{self.set_local_ip.text()}\",{self.set_listening_port.text()}",
+                f'AT+CIPSTART="TCP","{self.set_local_ip.text()}",{self.set_listening_port.text()}',
+                f'AT+CIPSTART="UDP","{self.set_local_ip.text()}",{self.set_listening_port.text()}',
                 "AT+CIPSEND",
                 "+++",
             ]
@@ -205,14 +208,15 @@ class CommunicationSettingDialog(QDialog):
                     self.configuration["SSID"] = self.set_ssid.text()
                 else:
                     self.configuration["Password"] = self.set_password.text()
-                self.select_command.setItemText(1,
-                                                f"AT+CWJAP=\"{self.set_ssid.text()}\",\"{self.set_password.text()}\"")
+                self.select_command.setItemText(1, f'AT+CWJAP="{self.set_ssid.text()}","{self.set_password.text()}"')
             elif item == "IP" or item == "Port":
                 self.configuration["Password"] = self.set_password.text()
-                self.select_command.setItemText(5,
-                                                f"AT+CIPSTART=\"TCP\",\"{self.set_local_ip.text()}\",{self.set_listening_port.text()}")
-                self.select_command.setItemText(6,
-                                                f"AT+CIPSTART=\"UDP\",\"{self.set_local_ip.text()}\",{self.set_listening_port.text()}")
+                self.select_command.setItemText(
+                    5, f'AT+CIPSTART="TCP","{self.set_local_ip.text()}",{self.set_listening_port.text()}'
+                )
+                self.select_command.setItemText(
+                    6, f'AT+CIPSTART="UDP","{self.set_local_ip.text()}",{self.set_listening_port.text()}'
+                )
 
     def toggle_serial_port_state(self):
         if self.select_port.currentText() == "":
@@ -226,8 +230,9 @@ class CommunicationSettingDialog(QDialog):
             self.serial_port_connect_button.setText("打开串口")
             self.send_status.emit("串口已关闭！")
         else:
-            self.serial_port_state_changed.emit((self.select_port.currentText().split(" ")[0],
-                                                 self.set_baud_rate.currentText()))
+            self.serial_port_state_changed.emit(
+                (self.select_port.currentText().split(" ")[0], self.set_baud_rate.currentText())
+            )
             self.serial_connect_state_display.setColor("Green")
             self.serial_port_connect_button.setText("关闭串口")
             self.send_status.emit(f"串口{self.select_port.currentText().split(' ')[0]}已开启！")
@@ -244,7 +249,8 @@ class CommunicationSettingDialog(QDialog):
             self.tcp_server_state_display.setColor("Green")
             self.tcp_server_button.setText("关闭TCP服务器")
             self.send_status.emit(
-                f"TCP服务器已启动（正在监听{self.set_listening_ip.text()}:{self.set_listening_port.text()}）！")
+                f"TCP服务器已启动（正在监听{self.set_listening_ip.text()}:{self.set_listening_port.text()}）！"
+            )
 
     def toggle_udp_server_state(self):
         if self.communication_thread["UDP"]:
@@ -258,7 +264,8 @@ class CommunicationSettingDialog(QDialog):
             self.udp_server_state_display.setColor("Green")
             self.udp_server_button.setText("关闭UDP服务器")
             self.send_status.emit(
-                f"UDP服务器已启动（正在监听{self.set_listening_ip.text()}:{self.set_listening_port.text()}）！")
+                f"UDP服务器已启动（正在监听{self.set_listening_ip.text()}:{self.set_listening_port.text()}）！"
+            )
 
     def send_command(self):
         if not self.communication_thread["串口"] or not self.communication_thread["串口"].serial_connection.is_open:
@@ -268,41 +275,19 @@ class CommunicationSettingDialog(QDialog):
         text = self.select_command.currentText()
         if text == "+++":
             self.communication_thread["串口"].serial_connection.write(
-                (self.select_command.currentText()).encode('ascii', errors='ignore'))
+                (self.select_command.currentText()).encode("ascii", errors="ignore")
+            )
         else:
             self.communication_thread["串口"].serial_connection.write(
-                (self.select_command.currentText() + "\r\n").encode('ascii', errors='ignore'))
+                (self.select_command.currentText() + "\r\n").encode("ascii", errors="ignore")
+            )
         self.update_output_panel(f"{self.select_command.currentText()}", "发送")
         self.communication_thread["串口"].serial_connection.flush()
 
     def update_output_panel(self, text, type="接收"):
-        timestamp = datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3]
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
         self.output_panel.append(f"{timestamp}({type}): {text}")
 
-    # def update_serial_connect_state(self):
-    #     # 指示灯
-    #     if self.communication_thread["串口"] and self.communication_thread["串口"].running:
-    #         self.serial_connect_state_display.setColor("Green")
-    #     else:
-    #         self.serial_connect_state_display.setColor("Red")
-    #         self.communication_thread["串口"] = None
-    #
-    #
-    #     # 按钮
-    #     if self.communication_thread["串口"]:
-    #         self.serial_port_connect_button.setText("关闭串口")
-    #     else:
-    #         self.serial_port_connect_button.setText("打开串口")
-    #
-    #     # 接收内容
-    #     if self.communication_thread["串口"]:
-    #         # 断开所有与message_received信号连接的槽函数
-    #         try:
-    #             self.communication_thread["串口"].message_received.disconnect()
-    #         except Exception:
-    #             pass
-    #
-    #         self.communication_thread["串口"].message_received.connect(self.update_output_panel)
     def update_serial_connect_state(self):
         # 指示灯
         serial_obj = self.communication_thread.get("串口")

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能汽车竞赛计时投屏</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="screen-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="title" id="race-title">比赛名称</div>
+            <div class="subtitle" id="race-group">比赛组别</div>
+        </header>
+
+        <!-- Main Content Area: Single Grid -->
+        <main class="info-grid">
+            <!-- Row 1: Team Info -->
+            <div class="info-item">
+                <div class="label">比赛进度</div>
+                <div class="value" id="race-progress">---</div>
+            </div>
+            <div class="info-item">
+                <div class="label">队伍号</div>
+                <div class="value" id="team-id">---</div>
+            </div>
+            <div class="info-item">
+                <div class="label">队伍名称</div>
+                <div class="value" id="team-name">等待导入</div>
+            </div>
+            <div class="info-item">
+                <div class="label">队伍成员</div>
+                <div class="value" id="team-members">---</div>
+            </div>
+
+            <!-- Row 2: Timing Info -->
+            <div class="info-item">
+                <div class="label">当前阶段</div>
+                <div class="value phase" id="race-phase">赛前准备</div>
+            </div>
+            <div class="info-item">
+                <div class="label">实时时间</div>
+                <div class="value time" id="real-time">0.000s</div>
+            </div>
+            <div class="info-item">
+                <div class="label">剩余时间</div>
+                <div class="value remaining" id="remaining-time">00:00</div>
+            </div>
+            <div class="info-item">
+                <div class="label">最好成绩</div>
+                <div class="value best" id="best-record">999.999s</div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="next-team-container">
+                <span class="label">下支队伍: </span>
+                <span class="value" id="next-team">---</span>
+            </div>
+            <div class="attention-box">
+                >>>>>>>>>> 北科大智能车队提醒您，冷静发车，赛出实力！ <<<<<<<<<<
+            </div>
+        </footer>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

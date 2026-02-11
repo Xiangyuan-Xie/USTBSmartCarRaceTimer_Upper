@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QPushButton, QDoubleSpinBox, QLineEdit, QComboBox
+from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton
 
 
 def create_label(text="", alignment=Qt.AlignmentFlag.AlignCenter, font=None, style=None):
@@ -50,8 +50,16 @@ def create_button(text="", style="padding: 8px;"):
     return button
 
 
-def create_spin_box(spin_box_type, min_value=None, max_value=None, current_value=None, single_step=None,
-                    decimals=None, suffix=None, alignment=None):
+def create_spin_box(
+    spin_box_type,
+    min_value=None,
+    max_value=None,
+    current_value=None,
+    single_step=None,
+    decimals=None,
+    suffix=None,
+    alignment=None,
+):
     """
     创建并返回 QSpinBox 或 QDoubleSpinBox 实例。
 
@@ -118,13 +126,14 @@ def create_combo_box(items=None, current_text=None):
     return combo_box
 
 
-def create_line_edit(text="", alignment=None):
+def create_line_edit(text="", alignment=None, placeholder=None):
     """
     创建并返回配置好的 QLineEdit 实例。
 
     Args:
         text (str, optional): 初始文本内容。默认为空字符串。
         alignment (AlignmentFlag): 对齐方式。
+        placeholder (str, optional): 占位符文本。
 
     Returns:
         QLineEdit: 配置好的 QLineEdit 实例。
@@ -135,5 +144,8 @@ def create_line_edit(text="", alignment=None):
 
     if alignment:
         line_edit.setAlignment(alignment)
+
+    if placeholder:
+        line_edit.setPlaceholderText(placeholder)
 
     return line_edit

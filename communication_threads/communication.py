@@ -103,8 +103,9 @@ class SerialPortThread(QThread):
         ]
 
         try:
-            self.serial_connection = serial.Serial(self.port, self.baudrate, bytesize=8, stopbits=serial.STOPBITS_ONE,
-                                                   parity=serial.PARITY_NONE, timeout=1)
+            self.serial_connection = serial.Serial(
+                self.port, self.baudrate, bytesize=8, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, timeout=1
+            )
             self.running = True
         except Exception as e:
             self.send_status.emit(f"打开串口失败：{e}")
@@ -117,7 +118,7 @@ class SerialPortThread(QThread):
         try:
             while self.running:
                 if self.serial_connection.in_waiting > 0:
-                    data = self.serial_connection.readline().decode('ascii', errors='ignore').strip()
+                    data = self.serial_connection.readline().decode("ascii", errors="ignore").strip()
                     print(f"[Serial from {self.port}] {data}")
                     self.message_received.emit(data)
                     if "Reset" in data:
@@ -143,7 +144,7 @@ class TcpServerThread(QThread):
     timer_reset = Signal()
     send_status = Signal(str)
 
-    def __init__(self, host='0.0.0.0', port=32767):
+    def __init__(self, host="0.0.0.0", port=32767):
         super().__init__()
         self.host = host
         self.port = port
@@ -173,7 +174,7 @@ class TcpServerThread(QThread):
                                 data = client_socket.recv(1024)
                                 if not data:
                                     break
-                                data = data.decode('ascii', errors='ignore').strip()
+                                data = data.decode("ascii", errors="ignore").strip()
 
                                 if "Reset" in data:
                                     self.timer_reset.emit()
@@ -197,7 +198,7 @@ class UdpServerThread(QThread):
     timer_reset = Signal()
     send_status = Signal(str)
 
-    def __init__(self, host='0.0.0.0', port=32767):
+    def __init__(self, host="0.0.0.0", port=32767):
         super().__init__()
         self.host = host
         self.port = port
@@ -224,7 +225,7 @@ class UdpServerThread(QThread):
                     print(f"解码错误: {e}")
                     continue
 
-                    # 打印收到的数据
+                # 打印收到的数据
                 print(f"[UDP from {addr}] {data_str}")
 
                 # 处理数据

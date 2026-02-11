@@ -1,8 +1,9 @@
-""" 调整剩余时间对话窗口 """
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QVBoxLayout, QDialog, QFormLayout, QSpinBox
+"""调整剩余时间对话窗口"""
 
-from widget.common import *
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QDialog, QFormLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout
+
+from widget.common import create_combo_box, create_spin_box
 
 
 class ModifyTimeDialog(QDialog):
@@ -23,8 +24,9 @@ class ModifyTimeDialog(QDialog):
         form_layout.addRow(QLabel("比赛阶段:"), self.modify_phase)
 
         # 剩余时间
-        self.modify_remaining_time = create_spin_box(QSpinBox, min_value=0, current_value=team["剩余时间"],
-                                                     suffix=" 秒")
+        self.modify_remaining_time = create_spin_box(
+            QSpinBox, min_value=0, current_value=team["剩余时间"], suffix=" 秒"
+        )
         form_layout.addRow(QLabel("剩余时间:"), self.modify_remaining_time)
 
         # 添加保存和取消按钮
@@ -35,7 +37,7 @@ class ModifyTimeDialog(QDialog):
         form_layout.addRow(self.submit_button, self.cancel_button)
 
         layout.addLayout(form_layout)
-        self.setLayout(layout)
+        self.set_content_layout(layout)
 
     def save_data(self):
         self.team["比赛阶段"] = self.modify_phase.currentText()

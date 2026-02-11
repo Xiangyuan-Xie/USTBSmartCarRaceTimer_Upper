@@ -1,12 +1,13 @@
-""" 手动添加成绩对话窗口 """
+"""手动添加成绩对话窗口"""
 
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QVBoxLayout, QDialog, QFormLayout
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QDoubleSpinBox, QFormLayout, QLabel, QVBoxLayout
 
-from widget.common import *
+from widget.common import create_button, create_spin_box
+from widget.dialog.base import BaseDialog
 
 
-class AddRecordDialog(QDialog):
+class AddRecordDialog(BaseDialog):
     setting_saved = Signal()
 
     def __init__(self, team):
@@ -14,7 +15,7 @@ class AddRecordDialog(QDialog):
         self.setWindowTitle("添加比赛成绩")
         self.team = team
 
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout()
 
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -39,7 +40,7 @@ class AddRecordDialog(QDialog):
         form_layout.addRow(self.submit_button, self.cancel_button)
 
         layout.addLayout(form_layout)
-        self.setLayout(layout)
+        self.set_content_layout(layout)
 
     def save_data(self):
         valid_record = 0
@@ -60,11 +61,13 @@ class AddRecordDialog(QDialog):
         else:
             average_record = 999.999
 
-        self.team["所有成绩"].append({
-            "原始时间": average_record,
-            "修正时间": average_record,
-            "状态": "未处理",
-            "罚时": [],
-        })
+        self.team["所有成绩"].append(
+            {
+                "原始时间": average_record,
+                "修正时间": average_record,
+                "状态": "未处理",
+                "罚时": [],
+            }
+        )
         self.setting_saved.emit()
         self.accept()

@@ -1,7 +1,8 @@
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeyEvent
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
 
-from .common import *
+from .common import create_label
 
 
 class FullScreenWindow(QWidget):
@@ -14,174 +15,223 @@ class FullScreenWindow(QWidget):
 
         self.setStyleSheet("""
             QWidget {
-                background-color: black;
-                color: white;
+                background-color: #0a0a0a;
+                color: #ffffff;
             }
             QLabel {
-                background-color: black;
-                color: white;
-            } 
+                background-color: transparent;
+                color: #ffffff;
+            }
+            #title_label {
+                color: #ffd700;
+                font-weight: bold;
+            }
+            #subheading_label {
+                color: #ffd700;
+                font-weight: bold;
+            }
+            #header_text {
+                color: #909399;
+                font-weight: normal;
+            }
+            #value_text {
+                color: #ffa500;
+                font-weight: bold;
+            }
+            #time_value {
+                color: #409eff;
+                font-weight: bold;
+            }
+            #remaining_value {
+                color: #f56c6c;
+                font-weight: bold;
+            }
+            #best_value {
+                color: #67c23a;
+                font-weight: bold;
+            }
+            #attention_label {
+                color: #ffd700;
+                font-weight: bold;
+                background-color: #1a1a1a;
+                padding: 10px;
+                border-radius: 5px;
+            }
         """)
 
-        # 获取缩放比例（用于调整字体大小，窗口保持全屏）
-        self.scale_factor = self.configuration.get("投屏缩放比例", 1.0)
+        # Main Layout
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(40, 40, 40, 40)
+        self.main_layout.setSpacing(20)
 
-        # 创建主布局
-        layout = QVBoxLayout()
-        # 布局间距也根据缩放比例调整
-        layout.setSpacing(int(10 * self.scale_factor))
-        layout.setContentsMargins(
-            int(20 * self.scale_factor),
-            int(20 * self.scale_factor),
-            int(20 * self.scale_factor),
-            int(20 * self.scale_factor)
-        )
+        # 1. Header (Title & Subtitle)
+        header_layout = QVBoxLayout()
+        self.title = create_label(self.configuration["比赛名称"] + self.configuration["比赛阶段"])
+        self.title.setObjectName("title_label")
+        self.subheading = create_label(self.configuration["比赛组别"])
+        self.subheading.setObjectName("subheading_label")
+        header_layout.addWidget(self.title, alignment=Qt.AlignmentFlag.AlignCenter)
+        header_layout.addWidget(self.subheading, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.addLayout(header_layout)
 
-        # 设置初始字体大小
-        self.fontTitle = QFont()
-        self.font = QFont()
-        # 标题字体也稍微受缩放影响，但影响较小
-        base_title_size = 15
-        self.fontTitle.setPointSize(int(base_title_size * min(1.0, self.scale_factor * 1.2)))
-        # 内容字体根据缩放比例调整
-        base_font_size = 30
-        self.font.setPointSize(int(base_font_size * self.scale_factor))
+        self.main_layout.addStretch(1)
 
-        # 标题（间距也根据缩放比例调整）
-        title_margin_top = int(30 * self.scale_factor)
-        title_margin_bottom = int(10 * self.scale_factor)
-        self.title = create_label(
-            self.configuration["比赛名称"] + self.configuration["比赛阶段"], 
-            font=self.fontTitle,
-            style=f"color: #FFD700; font: bold; margin-top: {title_margin_top}px; margin-bottom: {title_margin_bottom}px;"
-        )
-        layout.addWidget(self.title)
+        # 2. Main Content Grid
+        grid_container = QWidget()
+        self.grid_layout = QGridLayout(grid_container)
+        self.grid_layout.setSpacing(40)  # Increased spacing
+        self.grid_layout.setContentsMargins(40, 20, 40, 20)  # Added padding
 
-        subheading_margin_top = int(10 * self.scale_factor)
-        subheading_margin_bottom = int(20 * self.scale_factor)
-        self.subheading = create_label(
-            self.configuration["比赛组别"], 
-            font=self.fontTitle,
-            style=f"color: #FFD700; font: bold; margin-top: {subheading_margin_top}px; margin-bottom: {subheading_margin_bottom}px;"
-        )
-        layout.addWidget(self.subheading)
+        # Helper to add grid item (Label + Value stacked)
+        def add_grid_item(label_widget, value_widget, row, col):
+            container = QWidget()
+            container.setStyleSheet(
+                "background-color: rgba(255, 255, 255, 0.05); border-radius: 12px;"
+            )  # Slightly lighter and more rounded
+            layout = QVBoxLayout(container)
+            layout.setContentsMargins(20, 20, 20, 20)  # More internal padding
+            layout.addWidget(label_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(value_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+            self.grid_layout.addWidget(container, row, col)
 
-        # 比赛信息
-        grid_layout = QGridLayout()
-        # 网格布局的间距也根据缩放比例调整
-        grid_layout.setSpacing(int(10 * self.scale_factor))
+        # Make columns stretch equally
+        for i in range(4):
+            self.grid_layout.setColumnStretch(i, 1)
+        # Make rows stretch equally
+        for i in range(2):
+            self.grid_layout.setRowStretch(i, 1)
 
-        # 保存所有静态标签的引用，以便后续更新字体
-        self.static_labels = []
-        
-        progress = create_label("比赛进度", font=self.font)
-        grid_layout.addWidget(progress, 0, 0)
-        self.static_labels.append(progress)
+        # Row 1: Team Info
+        self.lbl_progress = create_label("比赛进度")
+        self.lbl_progress.setObjectName("header_text")
+        self.progress_display = create_label("0/0")
+        self.progress_display.setObjectName("value_text")
+        add_grid_item(self.lbl_progress, self.progress_display, 0, 0)
 
-        self.progress_display = create_label(font=self.font, style="color: #FFA500;")
-        grid_layout.addWidget(self.progress_display, 0, 1)
+        self.lbl_team_id = create_label("队伍号")
+        self.lbl_team_id.setObjectName("header_text")
+        self.team_id_display = create_label("---")
+        self.team_id_display.setObjectName("value_text")
+        add_grid_item(self.lbl_team_id, self.team_id_display, 0, 1)
 
-        next_team = create_label("下支队伍", font=self.font)
-        grid_layout.addWidget(next_team, 0, 2)
-        self.static_labels.append(next_team)
+        self.lbl_team_name = create_label("队伍名称")
+        self.lbl_team_name.setObjectName("header_text")
+        self.team_name_display = create_label("等待导入")
+        self.team_name_display.setObjectName("value_text")
+        add_grid_item(self.lbl_team_name, self.team_name_display, 0, 2)
 
-        self.next_team_display = create_label(font=self.font, style="color: #FFA500;")
-        grid_layout.addWidget(self.next_team_display, 0, 3)
+        self.lbl_team_members = create_label("队伍成员")
+        self.lbl_team_members.setObjectName("header_text")
+        self.team_members_display = create_label("---")
+        self.team_members_display.setObjectName("value_text")
+        add_grid_item(self.lbl_team_members, self.team_members_display, 0, 3)
 
-        team_id = create_label("队伍号", font=self.font)
-        grid_layout.addWidget(team_id, 1, 0)
-        self.static_labels.append(team_id)
+        # Row 2: Timing & Status
+        self.lbl_phase = create_label("当前阶段")
+        self.lbl_phase.setObjectName("header_text")
+        self.race_phase_display = create_label("赛前准备")
+        self.race_phase_display.setObjectName("value_text")
+        add_grid_item(self.lbl_phase, self.race_phase_display, 1, 0)
 
-        self.team_id_display = create_label(font=self.font, style="color: #FFA500;")
-        grid_layout.addWidget(self.team_id_display, 1, 1)
+        self.lbl_real_time = create_label("实时时间")
+        self.lbl_real_time.setObjectName("header_text")
+        self.real_time_display = create_label("0.000s")
+        self.real_time_display.setObjectName("time_value")
+        add_grid_item(self.lbl_real_time, self.real_time_display, 1, 1)
 
-        real_time = create_label("实时时间", font=self.font)
-        grid_layout.addWidget(real_time, 1, 2)
-        self.static_labels.append(real_time)
+        self.lbl_remaining_time = create_label("剩余时间")
+        self.lbl_remaining_time.setObjectName("header_text")
+        self.remaining_time_display = create_label("00:00")
+        self.remaining_time_display.setObjectName("remaining_value")
+        add_grid_item(self.lbl_remaining_time, self.remaining_time_display, 1, 2)
 
-        self.real_time_display = create_label(font=self.font)
-        grid_layout.addWidget(self.real_time_display, 1, 3)
+        self.lbl_best_record = create_label("最好成绩")
+        self.lbl_best_record.setObjectName("header_text")
+        self.best_record_display = create_label("999.999s")
+        self.best_record_display.setObjectName("best_value")
+        add_grid_item(self.lbl_best_record, self.best_record_display, 1, 3)
 
-        team_name = create_label("队伍名称", font=self.font)
-        grid_layout.addWidget(team_name, 2, 0)
-        self.static_labels.append(team_name)
+        self.main_layout.addWidget(grid_container)
 
-        self.team_name_display = create_label(font=self.font, style="color: #FFA500;")
-        grid_layout.addWidget(self.team_name_display, 2, 1)
+        self.main_layout.addStretch(1)
 
-        best_record = create_label("最好成绩", font=self.font)
-        grid_layout.addWidget(best_record, 2, 2)
-        self.static_labels.append(best_record)
+        # 3. Footer (Next Team & Attention)
+        footer_layout = QVBoxLayout()
 
-        self.best_record_display = create_label(font=self.font, style="color: #FF0000;")
-        grid_layout.addWidget(self.best_record_display, 2, 3)
+        next_team_container = QHBoxLayout()
+        self.lbl_next_team = create_label("下支队伍: ")
+        self.lbl_next_team.setObjectName("header_text")
+        self.next_team_display = create_label("---")
+        self.next_team_display.setObjectName("value_text")
+        next_team_container.addStretch()
+        next_team_container.addWidget(self.lbl_next_team)
+        next_team_container.addWidget(self.next_team_display)
+        next_team_container.addStretch()
 
-        team_members = create_label("队伍成员", font=self.font)
-        grid_layout.addWidget(team_members, 3, 0)
-        self.static_labels.append(team_members)
+        self.attention = create_label(">>>>>>>>>>  北科大智能车队提醒您，冷静发车，赛出实力！ <<<<<<<<<<")
+        self.attention.setObjectName("attention_label")
 
-        self.team_members_display = create_label(font=self.font, style="color: #FFA500;")
-        grid_layout.addWidget(self.team_members_display, 3, 1)
+        footer_layout.addLayout(next_team_container)
+        footer_layout.addSpacing(20)
+        footer_layout.addWidget(self.attention, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.addLayout(footer_layout)
 
-        remaining_time = create_label("剩余时间", font=self.font)
-        grid_layout.addWidget(remaining_time, 3, 2)
-        self.static_labels.append(remaining_time)
-
-        self.remaining_time_display = create_label(font=self.font)
-        grid_layout.addWidget(self.remaining_time_display, 3, 3)
-
-        # 设置行高均匀分布
-        column_count = grid_layout.columnCount()
-        for i in range(column_count):
-            grid_layout.setRowStretch(i, 1)
-
-        layout.addLayout(grid_layout)
-
-        # 提示（间距也根据缩放比例调整）
-        attention_margin_top = int(30 * self.scale_factor)
-        attention_margin_bottom = int(30 * self.scale_factor)
-        self.attention = create_label(
-            ">>>>>>>>>>  北科大智能车队提醒您，冷静发车，赛出实力！ <<<<<<<<<<", 
-            font=self.font,
-            style=f"color: #FFFF00; font: bold; margin-top: {attention_margin_top}px; margin-bottom: {attention_margin_bottom}px;"
-        )
-        layout.addWidget(self.attention)
-
-        self.setLayout(layout)
         self.initialization = True
+        self._update_fonts()
+
+    def _update_fonts(self):
+        w = self.width()
+        h = self.height()
+        
+        # Get scale factor from config
+        scale_factor = self.configuration.get("投屏缩放比例", 1.0)
+
+        # Scale factor based on diagonal or min dimension
+        base_size = min(w, h) * scale_factor
+
+        title_font = QFont("Microsoft YaHei", int(base_size // 25), QFont.Weight.Bold)
+        sub_font = QFont("Microsoft YaHei", int(base_size // 35), QFont.Weight.Bold)
+        header_font = QFont("Microsoft YaHei", int(base_size // 45))
+        value_font = QFont("Microsoft YaHei", int(base_size // 35), QFont.Weight.Bold)
+        big_value_font = QFont("Microsoft YaHei", int(base_size // 25), QFont.Weight.Bold)
+        footer_font = QFont("Microsoft YaHei", int(base_size // 55), QFont.Weight.Bold)
+
+        self.title.setFont(title_font)
+        self.subheading.setFont(sub_font)
+
+        # Grid labels
+        for lbl in [
+            self.lbl_progress,
+            self.lbl_team_id,
+            self.lbl_team_name,
+            self.lbl_team_members,
+            self.lbl_phase,
+            self.lbl_real_time,
+            self.lbl_remaining_time,
+            self.lbl_best_record,
+            self.lbl_next_team,
+        ]:
+            lbl.setFont(header_font)
+
+        for val in [
+            self.progress_display,
+            self.team_id_display,
+            self.team_name_display,
+            self.team_members_display,
+            self.race_phase_display,
+            self.next_team_display,
+        ]:
+            val.setFont(value_font)
+
+        for big_val in [self.real_time_display, self.remaining_time_display, self.best_record_display]:
+            big_val.setFont(big_value_font)
+
+        self.attention.setFont(footer_font)
 
     def resizeEvent(self, event):
-        # 根据窗口大小动态调整字体大小，确保在不同分辨率下都能正常显示
-        width = self.width()
-        height = self.height()
-        # 使用较小的维度来计算字体大小，确保内容不会被裁剪
-        min_dimension = min(width, height)
-        base_font_size = max(10, min_dimension // 40)
-        # 应用缩放比例
-        new_font_size = int(base_font_size * self.scale_factor)
-        self.font.setPointSize(new_font_size)
-        # 标题字体也稍微受缩放影响，但影响较小
-        base_title_size = max(8, base_font_size // 2)
-        self.fontTitle.setPointSize(int(base_title_size * min(1.0, self.scale_factor * 1.2)))
-        self.title.setFont(self.fontTitle)
-        self.subheading.setFont(self.fontTitle)
-        
-        # 更新所有使用内容字体的控件（排除标题）
-        # 更新静态标签
-        for label in self.static_labels:
-            if label:
-                label.setFont(self.font)
-        # 更新显示控件
-        widgets_to_update = [
-            self.progress_display, self.next_team_display,
-            self.team_id_display, self.real_time_display,
-            self.team_name_display, self.best_record_display,
-            self.team_members_display, self.remaining_time_display,
-            self.attention
-        ]
-        for widget in widgets_to_update:
-            if widget:
-                widget.setFont(self.font)
+        super().resizeEvent(event)
+        if self.initialization:
+            self._update_fonts()
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Escape:
