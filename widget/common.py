@@ -1,19 +1,72 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QPushButton, QDoubleSpinBox, QLineEdit, QComboBox
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QFontMetrics, QPainter
+from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton
+
+
+class MarqueeLabel(QLabel):
+    def __init__(self, text="", parent=None):
+        super().__init__(parent)
+        self.setText(text)
+        self._offset = 0
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._scroll)
+        self._timer.start(30)  # Update every 30ms
+
+    def setText(self, text):
+        super().setText(text)
+        self._offset = 0
+        self.update()
+
+    def _scroll(self):
+        if not self.isVisible():
+            return
+
+        fm = QFontMetrics(self.font())
+        text_width = fm.horizontalAdvance(self.text())
+
+        if text_width > self.width():
+            self._offset -= 1
+            if self._offset < -text_width:
+                self._offset = self.width()
+            self.update()
+        else:
+            if self._offset != 0:
+                self._offset = 0
+                self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+
+        # Set pen to the widget's text color (respects stylesheet)
+        painter.setPen(self.palette().windowText().color())
+
+        fm = QFontMetrics(self.font())
+        text_width = fm.horizontalAdvance(self.text())
+
+        # Center vertically
+        y = (self.height() + fm.ascent() - fm.descent()) // 2
+
+        if text_width > self.width():
+            # Draw scrolling text
+            painter.drawText(self._offset, y, self.text())
+        else:
+            # Draw centered text
+            x = (self.width() - text_width) // 2
+            painter.drawText(x, y, self.text())
 
 
 def create_label(text="", alignment=Qt.AlignmentFlag.AlignCenter, font=None, style=None):
     """
-    创建并返回配置好的 QLabel 实例。
+    Create and return a configured QLabel instance.
 
     Args:
-        text (str): 显示文本。
-        alignment (AlignmentFlag): 对齐方式。
-        font (Font) : 字体。
-        style (str) : 格式。
+        text (str): Display text.
+        alignment (AlignmentFlag): Alignment.
+        font (Font): Font.
+        style (str): Style.
 
     Returns:
-        QLabel: 配置好的 QLabel 实例。
+        QLabel: Configured QLabel instance.
     """
     label = QLabel()
     label.setText(text)
@@ -32,14 +85,14 @@ def create_label(text="", alignment=Qt.AlignmentFlag.AlignCenter, font=None, sty
 
 def create_button(text="", style="padding: 8px;"):
     """
-    创建并返回配置好的 QPushButton 实例。
+    Create and return a configured QPushButton instance.
 
     Args:
-        text (str): 显示文本。
-        style (str) : 格式。
+        text (str): Display text.
+        style (str): Style.
 
     Returns:
-        QPushButton: 配置好的 QPushButton 实例。
+        QPushButton: Configured QPushButton instance.
     """
     button = QPushButton()
     button.setText(text)
@@ -50,27 +103,35 @@ def create_button(text="", style="padding: 8px;"):
     return button
 
 
-def create_spin_box(spin_box_type, min_value=None, max_value=None, current_value=None, single_step=None,
-                    decimals=None, suffix=None, alignment=None):
+def create_spin_box(
+    spin_box_type,
+    min_value=None,
+    max_value=None,
+    current_value=None,
+    single_step=None,
+    decimals=None,
+    suffix=None,
+    alignment=None,
+):
     """
-    创建并返回 QSpinBox 或 QDoubleSpinBox 实例。
+    Create and return a QSpinBox or QDoubleSpinBox instance.
 
     Args:
-        spin_box_type (type): 需要创建的部件类型，可以是 QSpinBox 或 QDoubleSpinBox。
-        min_value (float): 最小值。
-        max_value (float): 最大值。
-        current_value (float): 初始值。
-        single_step (float): 单步步长。
-        decimals (int, optional): 小数位数（仅适用于 QDoubleSpinBox）。
-        suffix (str, optional): 后缀文本，例如 "秒"。
-        alignment (AlignmentFlag): 对齐方式。
+        spin_box_type (type): Type of widget to create, can be QSpinBox or QDoubleSpinBox.
+        min_value (float): Minimum value.
+        max_value (float): Maximum value.
+        current_value (float): Initial value.
+        single_step (float): Step size.
+        decimals (int, optional): Number of decimals (only for QDoubleSpinBox).
+        suffix (str, optional): Suffix text, e.g., " seconds".
+        alignment (AlignmentFlag): Alignment.
 
     Returns:
-        QSpinBox 或 QDoubleSpinBox: 配置好的 spin box 实例。
+        QSpinBox or QDoubleSpinBox: Configured spin box instance.
     """
     spin_box = spin_box_type()
 
-    # 使用 is not None 来检查，因为 min_value 可能是 0
+    # Use is not None to check, because min_value can be 0
     if min_value is not None and max_value is not None:
         spin_box.setRange(min_value, max_value)
     elif min_value is not None:
@@ -98,14 +159,14 @@ def create_spin_box(spin_box_type, min_value=None, max_value=None, current_value
 
 def create_combo_box(items=None, current_text=None):
     """
-    创建并返回配置好的 QComboBox 实例。
+    Create and return a configured QComboBox instance.
 
     Args:
-        items (list): 包含下拉选项的字符串列表。
-        current_text (str): 要设置为当前选中的文本项。
+        items (list): List of strings for dropdown options.
+        current_text (str): Text item to set as currently selected.
 
     Returns:
-        QComboBox: 配置好的 QComboBox 实例。
+        QComboBox: Configured QComboBox instance.
     """
     if items is None:
         items = []
@@ -118,16 +179,17 @@ def create_combo_box(items=None, current_text=None):
     return combo_box
 
 
-def create_line_edit(text="", alignment=None):
+def create_line_edit(text="", alignment=None, placeholder=None):
     """
-    创建并返回配置好的 QLineEdit 实例。
+    Create and return a configured QLineEdit instance.
 
     Args:
-        text (str, optional): 初始文本内容。默认为空字符串。
-        alignment (AlignmentFlag): 对齐方式。
+        text (str, optional): Initial text content. Default is empty string.
+        alignment (AlignmentFlag): Alignment.
+        placeholder (str, optional): Placeholder text.
 
     Returns:
-        QLineEdit: 配置好的 QLineEdit 实例。
+        QLineEdit: Configured QLineEdit instance.
     """
     line_edit = QLineEdit()
     line_edit.setText(text)
@@ -135,5 +197,8 @@ def create_line_edit(text="", alignment=None):
 
     if alignment:
         line_edit.setAlignment(alignment)
+
+    if placeholder:
+        line_edit.setPlaceholderText(placeholder)
 
     return line_edit
