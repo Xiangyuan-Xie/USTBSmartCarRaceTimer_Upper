@@ -28,8 +28,9 @@ const updateUI = (data) => {
         if (el) el.textContent = text;
     };
 
-    const updateTeamMembers = (text) => {
-        const container = document.getElementById('team-members');
+    // Generic function to update text with marquee support
+    const updateMarqueeText = (id, text) => {
+        const container = document.getElementById(id);
         if (!container) return;
 
         // Check if text changed to avoid resetting animation unnecessarily
@@ -50,7 +51,6 @@ const updateUI = (data) => {
         span.style.animationDuration = '';
 
         // Check overflow
-        // We need to wait a tick for layout? Usually synchronous reflow is forced by offsetWidth
         if (span.offsetWidth > container.clientWidth) {
             // Apply marquee
             span.className = 'marquee-content';
@@ -70,10 +70,10 @@ const updateUI = (data) => {
     setText('race-phase', data.比赛阶段 || '');
     setText('race-progress', data.比赛进度 || '');
     setText('team-id', data.队伍编号 || '---');
-    setText('team-name', data.队伍名称 || '等待导入');
 
-    // Use special handler for team members
-    updateTeamMembers(data.队伍成员 || '---');
+    // Apply marquee to Team Name and Team Members
+    updateMarqueeText('team-name', data.队伍名称 || '等待导入');
+    updateMarqueeText('team-members', data.队伍成员 || '---');
 
     setText('remaining-time', data.剩余时间 || '00:00');
     setText('real-time', data.实时成绩 || '0.000s');

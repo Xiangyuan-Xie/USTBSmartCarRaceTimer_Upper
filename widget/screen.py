@@ -116,7 +116,7 @@ class FullScreenWindow(QWidget):
 
         self.lbl_team_name = create_label("队伍名称")
         self.lbl_team_name.setObjectName("header_text")
-        self.team_name_display = create_label("等待导入")
+        self.team_name_display = MarqueeLabel("等待导入")
         self.team_name_display.setObjectName("value_text")
         add_grid_item(self.lbl_team_name, self.team_name_display, 0, 2)
 

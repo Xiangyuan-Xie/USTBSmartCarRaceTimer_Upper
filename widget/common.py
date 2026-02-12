@@ -1,31 +1,28 @@
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFontMetrics, QPainter
-from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton, QWidget
+from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton
 
 
-class MarqueeLabel(QWidget):
+class MarqueeLabel(QLabel):
     def __init__(self, text="", parent=None):
         super().__init__(parent)
-        self._text = text
+        self.setText(text)
         self._offset = 0
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._scroll)
         self._timer.start(30)  # Update every 30ms
 
     def setText(self, text):
-        self._text = text
+        super().setText(text)
         self._offset = 0
         self.update()
-
-    def text(self):
-        return self._text
 
     def _scroll(self):
         if not self.isVisible():
             return
 
         fm = QFontMetrics(self.font())
-        text_width = fm.horizontalAdvance(self._text)
+        text_width = fm.horizontalAdvance(self.text())
 
         if text_width > self.width():
             self._offset -= 1
@@ -39,19 +36,23 @@ class MarqueeLabel(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
+
+        # Set pen to the widget's text color (respects stylesheet)
+        painter.setPen(self.palette().windowText().color())
+
         fm = QFontMetrics(self.font())
-        text_width = fm.horizontalAdvance(self._text)
+        text_width = fm.horizontalAdvance(self.text())
 
         # Center vertically
         y = (self.height() + fm.ascent() - fm.descent()) // 2
 
         if text_width > self.width():
             # Draw scrolling text
-            painter.drawText(self._offset, y, self._text)
+            painter.drawText(self._offset, y, self.text())
         else:
             # Draw centered text
             x = (self.width() - text_width) // 2
-            painter.drawText(x, y, self._text)
+            painter.drawText(x, y, self.text())
 
 
 def create_label(text="", alignment=Qt.AlignmentFlag.AlignCenter, font=None, style=None):
