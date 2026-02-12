@@ -27,7 +27,7 @@ class ModifyTimeDialog(BaseDialog):
 
         # Remaining time
         self.modify_remaining_time = create_spin_box(
-            QSpinBox, min_value=0, current_value=team["剩余时间"], suffix=" 秒"
+            QSpinBox, min_value=0, max_value=1800, current_value=team["剩余时间"], suffix=" 秒"
         )
         form_layout.addRow(QLabel("剩余时间:"), self.modify_remaining_time)
 
