@@ -1,5 +1,57 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QFontMetrics, QPainter
+from PySide6.QtWidgets import QComboBox, QDoubleSpinBox, QLabel, QLineEdit, QPushButton, QWidget
+
+
+class MarqueeLabel(QWidget):
+    def __init__(self, text="", parent=None):
+        super().__init__(parent)
+        self._text = text
+        self._offset = 0
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._scroll)
+        self._timer.start(30)  # Update every 30ms
+
+    def setText(self, text):
+        self._text = text
+        self._offset = 0
+        self.update()
+
+    def text(self):
+        return self._text
+
+    def _scroll(self):
+        if not self.isVisible():
+            return
+
+        fm = QFontMetrics(self.font())
+        text_width = fm.horizontalAdvance(self._text)
+
+        if text_width > self.width():
+            self._offset -= 1
+            if self._offset < -text_width:
+                self._offset = self.width()
+            self.update()
+        else:
+            if self._offset != 0:
+                self._offset = 0
+                self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        fm = QFontMetrics(self.font())
+        text_width = fm.horizontalAdvance(self._text)
+
+        # Center vertically
+        y = (self.height() + fm.ascent() - fm.descent()) // 2
+
+        if text_width > self.width():
+            # Draw scrolling text
+            painter.drawText(self._offset, y, self._text)
+        else:
+            # Draw centered text
+            x = (self.width() - text_width) // 2
+            painter.drawText(x, y, self._text)
 
 
 def create_label(text="", alignment=Qt.AlignmentFlag.AlignCenter, font=None, style=None):

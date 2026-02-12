@@ -12,3 +12,5 @@ uvicorn
 websockets
 jinja2
 loguru
+pytest
+pytest-cov

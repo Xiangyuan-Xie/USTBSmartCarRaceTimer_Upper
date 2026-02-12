@@ -60,3 +60,13 @@ repos:
         ]
         language: python
         types: [ python ]
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: python -m pytest
+        args: ["--cov=core", "--cov-report=term-missing", "--cov-fail-under=70", "tests/"]
+        language: system
+        pass_filenames: false
+        always_run: true

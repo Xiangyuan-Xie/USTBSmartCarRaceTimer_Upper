@@ -1,12 +1,14 @@
 """Modify remaining time dialog window"""
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QDialog, QFormLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout
+from PySide6.QtWidgets import QFormLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout
 
 from widget.common import create_combo_box, create_spin_box
 
+from .base import BaseDialog
 
-class ModifyTimeDialog(QDialog):
+
+class ModifyTimeDialog(BaseDialog):
     setting_saved = Signal()
 
     def __init__(self, team):
@@ -14,7 +16,7 @@ class ModifyTimeDialog(QDialog):
         self.setWindowTitle("修改剩余时间")
         self.team = team
 
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout()
 
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignCenter)

@@ -540,7 +540,7 @@ class Console(QMainWindow):
         # Get next team info
         current_index = self.data_manager.get_current_team_index()
         team_list = self.data_manager.get_team_list()
-        next_team_text = "---"
+        next_team_text = "无"
         if current_index + 1 < len(team_list):
             next_team = team_list[current_index + 1]
             next_team_text = f"{next_team['队伍编号']} {next_team['队伍名称']}"
@@ -702,7 +702,7 @@ class Console(QMainWindow):
             except Exception as e:
                 self._show_warning(f"保存失败: {e}")
 
-    def open_dialog(self, dialog_type):
+    def open_dialog(self, dialog_type, checked=False):
         current_team = self.data_manager.get_current_team()
         progress = self.data_manager.get_current_team_index()
         config = self.config_manager.config

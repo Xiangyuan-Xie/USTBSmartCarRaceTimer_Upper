@@ -80,6 +80,7 @@ body {
     background-color: rgba(255, 255, 255, 0.03); /* Slight background for cells */
     border-radius: 8px;
     padding: 1vh;
+    overflow: hidden; /* Ensure content doesn't spill out */
 }
 
 .label {
@@ -94,6 +95,19 @@ body {
     font-weight: bold;
     word-break: break-all;
     width: 100%;
+}
+
+/* Marquee Styles */
+.marquee-content {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee-scroll 10s linear infinite;
+    padding-left: 100%; /* Start from right */
+}
+
+@keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
 }
 
 /* Specific Value Colors & Sizes */

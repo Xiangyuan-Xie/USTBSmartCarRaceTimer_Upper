@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeyEvent
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
 
-from .common import create_label
+from .common import MarqueeLabel, create_label
 
 
 class FullScreenWindow(QWidget):
@@ -122,7 +122,7 @@ class FullScreenWindow(QWidget):
 
         self.lbl_team_members = create_label("队伍成员")
         self.lbl_team_members.setObjectName("header_text")
-        self.team_members_display = create_label("---")
+        self.team_members_display = MarqueeLabel("---")
         self.team_members_display.setObjectName("value_text")
         add_grid_item(self.lbl_team_members, self.team_members_display, 0, 3)
 
